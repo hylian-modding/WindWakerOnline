@@ -1,0 +1,14 @@
+{
+    "name": "WindWakerOnline",
+    "version": "1.0.0",
+    "description": "",
+    "main": "WindWakerOnline.js",
+    "author": "Psi-Hate",
+    "credits": "MelonSpeedruns",
+    "license": "GPL-3.0",
+    "core": "WindWaker",
+    "modloader64_deps": {
+        "WindWaker": "https://github.com/hylian-modding/Core-WindWaker.git"
+    },
+    "modloader64_aliases": {}
+}

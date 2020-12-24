@@ -1,0 +1,11 @@
+build/
+dependencies/
+dist/
+libs/
+node_modules/
+package-lock.json
+roms/
+external_cores/
+cores/
+modloader64-config.json
+modloader64-p2-config.json
