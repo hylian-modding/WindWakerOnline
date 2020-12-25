@@ -59,7 +59,7 @@ class WindWakerOnline implements IPlugin, IWWOnlineHelpers, IPluginServerConfig 
 
     }
     onTick(frame?: number | undefined): void {
-        //this.ModLoader.emulator.rdramWrite32(0x80234BF8, 0x495CB408);
+        this.ModLoader.emulator.rdramWrite32(0x80234BF8, 0x495CB408);
 
         const customCode = Buffer.from(
 
@@ -72,10 +72,9 @@ class WindWakerOnline implements IPlugin, IWWOnlineHelpers, IPluginServerConfig 
                 0xC0, 0x00, 0x00, 0xB2, 0xD5, 0x00, 0x00, 0xA8, 0x1B, 0x00, 0x08, 0x3C, 0x60,
                 0x80, 0x23, 0x38, 0x63, 0x4B, 0xFC, 0x7C, 0x69, 0x03, 0xA6, 0x4E, 0x80, 0x04,
                 0x21]
-          
         );
 
-        //this.ModLoader.emulator.rdramWriteBuffer(0x81800000, customCode);
+        this.ModLoader.emulator.rdramWriteBuffer(0x81800000, customCode);
 
         if (!this.canWriteDataSafely()) return;
     }

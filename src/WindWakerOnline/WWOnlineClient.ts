@@ -29,6 +29,7 @@ export class WWOnlineClient {
     LobbyConfig: IWWOnlineLobbyConfig = {} as IWWOnlineLobbyConfig;
     clientStorage!: WWOnlineStorageClient;
     config!: WWOnlineConfigCategory;
+    counter = 0;
 
     sendPacketToPlayersInScene(packet: IPacketHeader) {
         try {
@@ -91,7 +92,7 @@ export class WWOnlineClient {
     }
 
     updateFlags() {
-        
+
         let swordLevel: any = parseFlagChanges(this.core.save.questStatus.swordLevel, this.clientStorage.questStorage.swordLevel);
         let shieldLevel: any = parseFlagChanges(this.core.save.questStatus.shieldLevel, this.clientStorage.questStorage.shieldLevel);
         let bracelet: any = parseFlagChanges(this.core.save.questStatus.bracelet, this.clientStorage.questStorage.bracelet);
@@ -108,14 +109,14 @@ export class WWOnlineClient {
 
         let spoils_slots: any = parseFlagChanges(this.core.save.inventory.spoils_slots, this.clientStorage.inventoryStorage.spoils_slots);
         let bait_slots: any = parseFlagChanges(this.core.save.inventory.bait_slots, this.clientStorage.inventoryStorage.bait_slots);
-        let delivery_slots : any = parseFlagChanges(this.core.save.inventory.delivery_slots, this.clientStorage.inventoryStorage.delivery_slots);
+        let delivery_slots: any = parseFlagChanges(this.core.save.inventory.delivery_slots, this.clientStorage.inventoryStorage.delivery_slots);
         let owned_delivery: any = parseFlagChanges(this.core.save.inventory.owned_delivery, this.clientStorage.inventoryStorage.owned_delivery);
-        let owned_spoils : any = parseFlagChanges(this.core.save.inventory.owned_spoils, this.clientStorage.inventoryStorage.owned_spoils);
+        let owned_spoils: any = parseFlagChanges(this.core.save.inventory.owned_spoils, this.clientStorage.inventoryStorage.owned_spoils);
         let owned_bait: any = parseFlagChanges(this.core.save.inventory.owned_bait, this.clientStorage.inventoryStorage.owned_bait);
-        let count_spoils : any = parseFlagChanges(this.core.save.inventory.count_spoils, this.clientStorage.inventoryStorage.count_spoils);
+        let count_spoils: any = parseFlagChanges(this.core.save.inventory.count_spoils, this.clientStorage.inventoryStorage.count_spoils);
         let count_delivery: any = parseFlagChanges(this.core.save.inventory.count_delivery, this.clientStorage.inventoryStorage.count_delivery);
-        let count_bait : any = parseFlagChanges(this.core.save.inventory.count_bait, this.clientStorage.inventoryStorage.count_bait);
-        
+        let count_bait: any = parseFlagChanges(this.core.save.inventory.count_bait, this.clientStorage.inventoryStorage.count_bait);
+
         this.ModLoader.clientSide.sendPacket(new WWO_ClientFlagUpdate(
             this.clientStorage.questStorage.swordLevel,
             this.clientStorage.questStorage.shieldLevel,
@@ -275,7 +276,7 @@ export class WWOnlineClient {
 
     healPlayer() {
         if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNameValid()) return;
-        this.core.save.current_hp = 0x65;
+        this.core.save.current_hp = 0x50;
     }
 
     @EventHandler(WWOEvents.GAINED_PIECE_OF_HEART)
@@ -344,7 +345,7 @@ export class WWOnlineClient {
         let count_spoils = this.core.save.inventory.count_spoils;
         let count_delivery = this.core.save.inventory.count_delivery;
         let count_bait = this.core.save.inventory.count_bait;
-        
+
         parseFlagChanges(
             bracelet,
             this.clientStorage.questStorage.bracelet
@@ -472,21 +473,31 @@ export class WWOnlineClient {
 
     @onTick()
     onTick() {
-        if (this.core.helper.isLinkControllable() || this.core.helper.isLinkExists() ||
-            !this.core.helper.isTitleScreen() || this.core.helper.isSceneNameValid() ||
-            !this.core.helper.isPaused()) {
+        if (
+            !this.core.helper.isTitleScreen() && 
+            this.core.helper.isLinkExists() &&
+            this.core.helper.isSceneNameValid() && 
+            !this.core.helper.isSceneChange()
+        ) {
             if (!this.core.helper.isPaused()) {
                 if (!this.clientStorage.first_time_sync) {
                     return;
                 }
                 if (this.LobbyConfig.data_syncing) {
-                    if (!this.core.helper.isPaused || !this.core.helper.isLinkControllable()) this.clientStorage.needs_update = true;
-                    else if (this.core.helper.isLinkControllable() && this.clientStorage.needs_update && this.LobbyConfig.data_syncing) {
+                    if (!this.core.helper.isLinkControllable() || this.counter >= 400) {
+                        this.clientStorage.needs_update = true;
+                        this.counter = 0;
+                    } else if (
+                        (this.core.helper.isLinkControllable()) &&
+                        this.clientStorage.needs_update &&
+                        this.LobbyConfig.data_syncing
+                    ) {
                         this.updateInventory();
                         this.updateFlags();
                         this.clientStorage.needs_update = false;
                     }
                 }
+                this.counter += 1;
             }
         }
     }

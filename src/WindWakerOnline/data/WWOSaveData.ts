@@ -10,126 +10,6 @@ import zlib from 'zlib';
 import { ProxySide } from 'modloader64_api/SidedProxy/SidedProxy';
 import { WWOEvents } from '@WindWakerOnline/WWOAPI/WWOAPI';
 
-/*export interface IDungeonItemSave extends API.IDungeonItemManager { }
-
-export class WWODungeonItemContainer implements API.IDungeonItemContainer {
-  bossKey = false;
-  compass = false;
-  map = false;
-}
-
-export class WWODungeonItemContext implements IDungeonItemSave {
-  WOODFALL_TEMPLE: API.IDungeonItemContainer = new WWODungeonItemContainer();
-  SNOWHEAD_TEMPLE: API.IDungeonItemContainer = new WWODungeonItemContainer();
-  GREAT_BAY_TEMPLE: API.IDungeonItemContainer = new WWODungeonItemContainer();
-  STONE_TOWER_TEMPLE: API.IDungeonItemContainer = new WWODungeonItemContainer();
-}
-
-export function createDungeonItemDataFromContext(
-  context: API.IDungeonItemManager
-): IDungeonItemSave {
-  let m: IDungeonItemSave = new WWODungeonItemContext();
-  m.WOODFALL_TEMPLE.bossKey = context.WOODFALL_TEMPLE.bossKey;
-  m.WOODFALL_TEMPLE.compass = context.WOODFALL_TEMPLE.compass;
-  m.WOODFALL_TEMPLE.map = context.WOODFALL_TEMPLE.map;
-
-  m.SNOWHEAD_TEMPLE.bossKey = context.SNOWHEAD_TEMPLE.bossKey;
-  m.SNOWHEAD_TEMPLE.compass = context.SNOWHEAD_TEMPLE.compass;
-  m.SNOWHEAD_TEMPLE.map = context.SNOWHEAD_TEMPLE.map;
-
-  m.GREAT_BAY_TEMPLE.bossKey = context.GREAT_BAY_TEMPLE.bossKey;
-  m.GREAT_BAY_TEMPLE.compass = context.GREAT_BAY_TEMPLE.compass;
-  m.GREAT_BAY_TEMPLE.map = context.GREAT_BAY_TEMPLE.map;
-
-  m.STONE_TOWER_TEMPLE.bossKey = context.STONE_TOWER_TEMPLE.bossKey;
-  m.STONE_TOWER_TEMPLE.compass = context.STONE_TOWER_TEMPLE.compass;
-  m.STONE_TOWER_TEMPLE.map = context.STONE_TOWER_TEMPLE.map;
-
-  return m;
-}
-
-export function mergeDungeonItemData(
-  ModLoader: IModLoaderAPI,
-  storage: API.IDungeonItemManager,
-  incoming: IDungeonItemSave,
-  side: ProxySide,
-  lobby: string
-) {
-
-  if (incoming.WOODFALL_TEMPLE.bossKey && !storage.WOODFALL_TEMPLE.bossKey) {
-    if (true && side === ProxySide.SERVER) {
-      //ModLoader.serverSide.sendPacket(new WWO_ItemGetMessagePacket("You obtained the Boss Key (Woodfall Temple)", lobby, "tile283.png"));
-    }
-    storage.WOODFALL_TEMPLE.bossKey = incoming.WOODFALL_TEMPLE.bossKey;
-  }
-  if (incoming.WOODFALL_TEMPLE.compass && !storage.WOODFALL_TEMPLE.compass) {
-    storage.WOODFALL_TEMPLE.compass = incoming.WOODFALL_TEMPLE.compass;
-  }
-  if (incoming.WOODFALL_TEMPLE.map && !storage.WOODFALL_TEMPLE.map) {
-    storage.WOODFALL_TEMPLE.map = incoming.WOODFALL_TEMPLE.map;
-  }
-
-  if (incoming.SNOWHEAD_TEMPLE.bossKey && !storage.SNOWHEAD_TEMPLE.bossKey) {
-    if (true && side === ProxySide.SERVER) {
-      //ModLoader.serverSide.sendPacket(new WWO_ItemGetMessagePacket("You obtained the Boss Key (Snowhead Temple)", lobby, "tile283.png"));
-    }
-    storage.SNOWHEAD_TEMPLE.bossKey = incoming.SNOWHEAD_TEMPLE.bossKey;
-  }
-  if (incoming.SNOWHEAD_TEMPLE.compass && !storage.SNOWHEAD_TEMPLE.compass) {
-    storage.SNOWHEAD_TEMPLE.compass = incoming.SNOWHEAD_TEMPLE.compass;
-  }
-  if (incoming.SNOWHEAD_TEMPLE.map && !storage.SNOWHEAD_TEMPLE.map) {
-    storage.SNOWHEAD_TEMPLE.map = incoming.SNOWHEAD_TEMPLE.map;
-  }
-
-  if (incoming.GREAT_BAY_TEMPLE.bossKey && !storage.GREAT_BAY_TEMPLE.bossKey) {
-    if (true && side === ProxySide.SERVER) {
-      //ModLoader.serverSide.sendPacket(new WWO_ItemGetMessagePacket("You obtained the Boss Key (Great Bay Temple)", lobby, "tile283.png"));
-    }
-    storage.GREAT_BAY_TEMPLE.bossKey = incoming.GREAT_BAY_TEMPLE.bossKey;
-  }
-  if (incoming.GREAT_BAY_TEMPLE.compass && !storage.GREAT_BAY_TEMPLE.compass) {
-    storage.GREAT_BAY_TEMPLE.compass = incoming.GREAT_BAY_TEMPLE.compass;
-  }
-  if (incoming.GREAT_BAY_TEMPLE.map && !storage.GREAT_BAY_TEMPLE.map) {
-    storage.GREAT_BAY_TEMPLE.map = incoming.GREAT_BAY_TEMPLE.map;
-  }
-
-  if (incoming.STONE_TOWER_TEMPLE.bossKey && !storage.STONE_TOWER_TEMPLE.bossKey) {
-    if (true && side === ProxySide.SERVER) {
-      //ModLoader.serverSide.sendPacket(new WWO_ItemGetMessagePacket("You obtained the Boss Key (Stone Tower Temple)", lobby, "tile283.png"));
-    }
-    storage.STONE_TOWER_TEMPLE.bossKey = incoming.STONE_TOWER_TEMPLE.bossKey;
-  }
-  if (incoming.STONE_TOWER_TEMPLE.compass && !storage.STONE_TOWER_TEMPLE.compass) {
-    storage.STONE_TOWER_TEMPLE.compass = incoming.STONE_TOWER_TEMPLE.compass;
-  }
-  if (incoming.STONE_TOWER_TEMPLE.map && !storage.STONE_TOWER_TEMPLE.map) {
-    storage.STONE_TOWER_TEMPLE.map = incoming.STONE_TOWER_TEMPLE.map;
-  }
-}
-
-export function applyDungeonItemDataToContext(
-  incoming: IDungeonItemSave,
-  context: API.IDungeonItemManager
-) {
-  context.WOODFALL_TEMPLE.bossKey = incoming.WOODFALL_TEMPLE.bossKey;
-  context.WOODFALL_TEMPLE.compass = incoming.WOODFALL_TEMPLE.compass;
-  context.WOODFALL_TEMPLE.map = incoming.WOODFALL_TEMPLE.map;
-
-  context.SNOWHEAD_TEMPLE.bossKey = incoming.SNOWHEAD_TEMPLE.bossKey;
-  context.SNOWHEAD_TEMPLE.compass = incoming.SNOWHEAD_TEMPLE.compass;
-  context.SNOWHEAD_TEMPLE.map = incoming.SNOWHEAD_TEMPLE.map;
-
-  context.GREAT_BAY_TEMPLE.bossKey = incoming.GREAT_BAY_TEMPLE.bossKey;
-  context.GREAT_BAY_TEMPLE.compass = incoming.GREAT_BAY_TEMPLE.compass;
-  context.GREAT_BAY_TEMPLE.map = incoming.GREAT_BAY_TEMPLE.map;
-
-  context.STONE_TOWER_TEMPLE.bossKey = incoming.STONE_TOWER_TEMPLE.bossKey;
-  context.STONE_TOWER_TEMPLE.compass = incoming.STONE_TOWER_TEMPLE.compass;
-  context.STONE_TOWER_TEMPLE.map = incoming.STONE_TOWER_TEMPLE.map;
-}*/
-
 export class InventorySave implements API.IInventoryFields {
   FIELD_TELESCOPE = false;
   FIELD_SAIL = false;
@@ -164,6 +44,7 @@ export class InventorySave implements API.IInventoryFields {
   rupeeCap!: number;
   bombCap!: number;
   arrowCap!: number;
+  rupeeCount!: number;
 }
 
 export function createInventoryFromContext(save: API.ISaveContext): InventorySave {
@@ -204,6 +85,8 @@ export function createInventoryFromContext(save: API.ISaveContext): InventorySav
   data.rupeeCap = save.inventory.rupeeCap;
   data.bombCap = save.inventory.bombCap;
   data.arrowCap = save.inventory.arrowCap;
+  data.rupeeCount = save.inventory.rupeeCount;
+
   return data;
 }
 
@@ -211,7 +94,6 @@ export function mergeInventoryData(
   save: InventorySave,
   incoming: InventorySave,
 ) {
-
   if (incoming.FIELD_TELESCOPE > save.FIELD_TELESCOPE) {
     save.FIELD_TELESCOPE = incoming.FIELD_TELESCOPE;
   }
@@ -311,6 +193,9 @@ export function mergeInventoryData(
   if (incoming.arrowCap !== save.arrowCap) {
     save.arrowCap = incoming.arrowCap;
   }
+  if (incoming.rupeeCount !== save.rupeeCount) {
+    save.rupeeCount = incoming.rupeeCount;
+  }
 }
 
 export function applyInventoryToContext(
@@ -353,6 +238,7 @@ export function applyInventoryToContext(
   save.inventory.rupeeCap = data.rupeeCap;
   save.inventory.bombCap = data.bombCap;
   save.inventory.arrowCap = data.arrowCap;
+  save.inventory.rupeeCount = data.rupeeCount;
 }
 
 export class QuestSave implements API.IQuestStatus {
@@ -400,9 +286,6 @@ export function mergeQuestData(
   save: QuestSave,
   incoming: QuestSave,
 ) {
-  if (incoming.bracelet !== save.bracelet) {
-    save.bracelet = incoming.bracelet;
-  }
   if (incoming.pearls !== save.pearls) {
     save.pearls = incoming.pearls;
   }
@@ -437,27 +320,43 @@ export function mergeQuestData(
     save.triforce = incoming.triforce;
   }
   if (incoming.swordEquip !== save.swordEquip) {
-    save.swordEquip = incoming.swordEquip;
+    if (incoming.swordEquip > save.swordEquip) {
+      save.swordEquip = incoming.swordEquip;
+    }
+    else if (incoming.swordEquip === 0xFF) {
+      save.swordEquip == 0xFF;
+    }
   }
   if (incoming.shieldEquip !== save.shieldEquip) {
-    save.shieldEquip = incoming.shieldEquip;
+    if (incoming.shieldEquip > save.shieldEquip) {
+      save.shieldEquip = incoming.shieldEquip;
+    }
+    else if (incoming.shieldEquip === 0xFF) {
+      save.shieldEquip == 0xFF;
+    }
   }
   if (incoming.braceletEquip !== save.braceletEquip) {
-    save.braceletEquip = incoming.braceletEquip;
+    if (incoming.braceletEquip > save.braceletEquip) {
+      save.braceletEquip = incoming.braceletEquip;
+    }
+    else if (incoming.braceletEquip === 0xFF) {
+      save.braceletEquip == 0xFF;
+    }
   }
   if (incoming.swordLevel !== save.swordLevel) {
     save.swordLevel = incoming.swordLevel;
   }
-  if (incoming.swordLevel !== save.swordLevel) {
-    save.swordLevel = incoming.swordLevel;
+  if (incoming.shieldLevel !== save.shieldLevel) {
+    save.shieldLevel = incoming.shieldLevel;
   }
-  
-
 }
 
 export function applyQuestSaveToContext(data: QuestSave, save: API.ISaveContext) {
   save.questStatus.swordLevel = data.swordLevel;
   save.questStatus.shieldLevel = data.shieldLevel;
+  save.questStatus.swordEquip = data.swordEquip;
+  save.questStatus.shieldEquip = data.shieldEquip;
+  save.questStatus.braceletEquip = data.braceletEquip;
   save.questStatus.pearls = data.pearls;
   save.questStatus.bracelet = data.bracelet;
   save.questStatus.pirate_charm = data.pirate_charm;
