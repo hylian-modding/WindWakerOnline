@@ -131,27 +131,29 @@ export function applyDungeonItemDataToContext(
 }*/
 
 export class InventorySave implements API.IInventoryFields {
-  FIELD_TELESCOPE = 0;
-  FIELD_SAIL = 0;
-  FIELD_WIND_WAKER = 0;
-  FIELD_GRAPPLING_HOOK = 0;
-  FIELD_SPOILS_BAG = 0;
-  FIELD_BOOMERANG = 0;
-  FIELD_DEKU_LEAF = 0;
-  FIELD_TINGLE_TUNER = 0;
-  FIELD_PICTO_BOX = 0;
-  FIELD_IRON_BOOTS = 0;
-  FIELD_MAGIC_ARMOR = 0;
-  FIELD_BAIT_BAG = 0;
-  FIELD_BOW = 0;
-  FIELD_BOMBS = 0;
-  FIELD_BOTTLE1 = 0;
-  FIELD_BOTTLE2 = 0;
-  FIELD_BOTTLE3 = 0;
-  FIELD_BOTTLE4 = 0;
-  FIELD_DELIVERY_BAG = 0;
-  FIELD_HOOKSHOT = 0;
-  FIELD_SKULL_HAMMER = 0;
+  FIELD_TELESCOPE = false;
+  FIELD_SAIL = false;
+  FIELD_WIND_WAKER = false;
+  FIELD_GRAPPLING_HOOK = false;
+  FIELD_SPOILS_BAG = false;
+  FIELD_BOOMERANG = false;
+  FIELD_DEKU_LEAF = false;
+  FIELD_TINGLE_TUNER = false;
+  FIELD_PICTO_BOX = false;
+  FIELD_IRON_BOOTS = false;
+  FIELD_MAGIC_ARMOR = false;
+  FIELD_BAIT_BAG = false;
+  FIELD_BOW = false;
+  FIELD_BOMBS = false;
+  FIELD_BOTTLE1: API.InventoryItem = API.InventoryItem.NONE;
+  FIELD_BOTTLE2: API.InventoryItem = API.InventoryItem.NONE;
+  FIELD_BOTTLE3: API.InventoryItem = API.InventoryItem.NONE;
+  FIELD_BOTTLE4: API.InventoryItem = API.InventoryItem.NONE;
+  FIELD_BOTTLE5: API.InventoryItem = API.InventoryItem.NONE;
+  FIELD_BOTTLE6: API.InventoryItem = API.InventoryItem.NONE;
+  FIELD_DELIVERY_BAG = false;
+  FIELD_HOOKSHOT = false;
+  FIELD_SKULL_HAMMER = false;
 }
 
 export function createInventoryFromContext(save: API.ISaveContext): InventorySave {
@@ -341,7 +343,7 @@ export function mergeQuestData(
     save.owned_charts = incoming.owned_charts;
   }
   if (incoming.opened_charts !== save.opened_charts) {
-    save.opened_charts = incoming.opened_charts;
+    save.opened_charts !== incoming.opened_charts;
   }
   if (incoming.completed_charts !== save.completed_charts) {
     save.completed_charts = incoming.completed_charts;

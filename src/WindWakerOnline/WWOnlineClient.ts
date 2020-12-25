@@ -104,7 +104,8 @@ export class WWOnlineClient {
         let openChart: any = parseFlagChanges(this.core.save.questStatus.opened_charts, this.clientStorage.questStorage.opened_charts);
         let ownChart: any = parseFlagChanges(this.core.save.questStatus.owned_charts, this.clientStorage.questStorage.owned_charts);
 
-        this.ModLoader.clientSide.sendPacket(new WWO_ClientFlagUpdate(this.clientStorage.questStorage.bracelet,
+        this.ModLoader.clientSide.sendPacket(new WWO_ClientFlagUpdate(
+            this.clientStorage.questStorage.bracelet,
             this.clientStorage.questStorage.pirate_charm,
             this.clientStorage.questStorage.hero_charm,
             this.clientStorage.questStorage.sectors,
