@@ -149,11 +149,21 @@ export class InventorySave implements API.IInventoryFields {
   FIELD_BOTTLE2: API.InventoryItem = API.InventoryItem.NONE;
   FIELD_BOTTLE3: API.InventoryItem = API.InventoryItem.NONE;
   FIELD_BOTTLE4: API.InventoryItem = API.InventoryItem.NONE;
-  FIELD_BOTTLE5: API.InventoryItem = API.InventoryItem.NONE;
-  FIELD_BOTTLE6: API.InventoryItem = API.InventoryItem.NONE;
   FIELD_DELIVERY_BAG = false;
   FIELD_HOOKSHOT = false;
   FIELD_SKULL_HAMMER = false;
+  spoils_slots!: Buffer;
+  bait_slots!: Buffer;
+  delivery_slots!: Buffer;
+  owned_delivery!: Buffer;
+  owned_spoils!: Buffer;
+  owned_bait!: Buffer;
+  count_spoils!: Buffer;
+  count_delivery!: Buffer;
+  count_bait!: Buffer;
+  rupeeCap!: number;
+  bombCap!: number;
+  arrowCap!: number;
 }
 
 export function createInventoryFromContext(save: API.ISaveContext): InventorySave {
@@ -182,6 +192,18 @@ export function createInventoryFromContext(save: API.ISaveContext): InventorySav
   data.FIELD_BOTTLE3 = save.inventory.FIELD_BOTTLE3;
   data.FIELD_BOTTLE4 = save.inventory.FIELD_BOTTLE4;
 
+  data.spoils_slots = save.inventory.spoils_slots;
+  data.bait_slots = save.inventory.bait_slots;
+  data.delivery_slots = save.inventory.delivery_slots;
+  data.owned_delivery = save.inventory.owned_delivery;
+  data.owned_spoils = save.inventory.owned_spoils;
+  data.owned_bait = save.inventory.owned_bait;
+  data.count_spoils = save.inventory.count_spoils;
+  data.count_delivery = save.inventory.count_delivery;
+  data.count_bait = save.inventory.count_bait;
+  data.rupeeCap = save.inventory.rupeeCap;
+  data.bombCap = save.inventory.bombCap;
+  data.arrowCap = save.inventory.arrowCap;
   return data;
 }
 
@@ -253,6 +275,42 @@ export function mergeInventoryData(
   if (incoming.FIELD_SKULL_HAMMER > save.FIELD_SKULL_HAMMER) {
     save.FIELD_SKULL_HAMMER = incoming.FIELD_SKULL_HAMMER;
   }
+  if (incoming.spoils_slots !== save.spoils_slots) {
+    save.spoils_slots = incoming.spoils_slots;
+  }
+  if (incoming.bait_slots !== save.bait_slots) {
+    save.bait_slots = incoming.bait_slots;
+  }
+  if (incoming.delivery_slots !== save.delivery_slots) {
+    save.delivery_slots = incoming.delivery_slots;
+  }
+  if (incoming.owned_delivery !== save.owned_delivery) {
+    save.owned_delivery = incoming.owned_delivery;
+  }
+  if (incoming.owned_spoils !== save.owned_spoils) {
+    save.owned_spoils = incoming.owned_spoils;
+  }
+  if (incoming.owned_bait !== save.owned_bait) {
+    save.owned_bait = incoming.owned_bait;
+  }
+  if (incoming.count_spoils !== save.count_spoils) {
+    save.count_spoils = incoming.count_spoils;
+  }
+  if (incoming.count_delivery !== save.count_delivery) {
+    save.count_delivery = incoming.count_delivery;
+  }
+  if (incoming.count_bait !== save.count_bait) {
+    save.count_bait = incoming.count_bait;
+  }
+  if (incoming.rupeeCap !== save.rupeeCap) {
+    save.rupeeCap = incoming.rupeeCap;
+  }
+  if (incoming.bombCap !== save.bombCap) {
+    save.bombCap = incoming.bombCap;
+  }
+  if (incoming.arrowCap !== save.arrowCap) {
+    save.arrowCap = incoming.arrowCap;
+  }
 }
 
 export function applyInventoryToContext(
@@ -282,14 +340,28 @@ export function applyInventoryToContext(
   save.inventory.FIELD_BOTTLE2 = data.FIELD_BOTTLE2;
   save.inventory.FIELD_BOTTLE3 = data.FIELD_BOTTLE3;
   save.inventory.FIELD_BOTTLE4 = data.FIELD_BOTTLE4;
+
+  save.inventory.spoils_slots = data.spoils_slots;
+  save.inventory.bait_slots = data.bait_slots;
+  save.inventory.delivery_slots = data.delivery_slots;
+  save.inventory.owned_delivery = data.owned_delivery;
+  save.inventory.owned_spoils = data.owned_spoils;
+  save.inventory.owned_bait = data.owned_bait;
+  save.inventory.count_spoils = data.count_spoils;
+  save.inventory.count_delivery = data.count_delivery;
+  save.inventory.count_bait = data.count_bait;
+  save.inventory.rupeeCap = data.rupeeCap;
+  save.inventory.bombCap = data.bombCap;
+  save.inventory.arrowCap = data.arrowCap;
 }
 
-export interface IQuestSave extends API.IQuestStatus {
-
-}
-
-export class QuestSave implements IQuestSave {
+export class QuestSave implements API.IQuestStatus {
+  swordEquip!: number;
+  shieldEquip!: number;
+  braceletEquip!: number;
   bracelet!: Buffer;
+  swordLevel!: Buffer;
+  shieldLevel!: Buffer;
   pirate_charm!: Buffer;
   hero_charm!: Buffer;
   songs!: Buffer;
@@ -304,7 +376,8 @@ export class QuestSave implements IQuestSave {
 
 export function createQuestFromContext(save: API.IQuestStatus): QuestSave {
   let data = new QuestSave();
-
+  data.swordLevel = save.swordLevel;
+  data.shieldLevel = save.shieldLevel;
   data.bracelet = save.bracelet;
   data.pirate_charm = save.pirate_charm;
   data.hero_charm = save.hero_charm;
@@ -316,6 +389,9 @@ export function createQuestFromContext(save: API.IQuestStatus): QuestSave {
   data.songs = save.songs;
   data.pearls = save.pearls;
   data.triforce = save.triforce;
+  data.braceletEquip = save.braceletEquip;
+  data.swordEquip = save.swordEquip;
+  data.shieldEquip = save.shieldEquip;
 
   return data;
 }
@@ -360,9 +436,28 @@ export function mergeQuestData(
   if (incoming.triforce !== save.triforce) {
     save.triforce = incoming.triforce;
   }
+  if (incoming.swordEquip !== save.swordEquip) {
+    save.swordEquip = incoming.swordEquip;
+  }
+  if (incoming.shieldEquip !== save.shieldEquip) {
+    save.shieldEquip = incoming.shieldEquip;
+  }
+  if (incoming.braceletEquip !== save.braceletEquip) {
+    save.braceletEquip = incoming.braceletEquip;
+  }
+  if (incoming.swordLevel !== save.swordLevel) {
+    save.swordLevel = incoming.swordLevel;
+  }
+  if (incoming.swordLevel !== save.swordLevel) {
+    save.swordLevel = incoming.swordLevel;
+  }
+  
+
 }
 
-export function applyQuestSaveToContext(data: IQuestSave, save: API.ISaveContext) {
+export function applyQuestSaveToContext(data: QuestSave, save: API.ISaveContext) {
+  save.questStatus.swordLevel = data.swordLevel;
+  save.questStatus.shieldLevel = data.shieldLevel;
   save.questStatus.pearls = data.pearls;
   save.questStatus.bracelet = data.bracelet;
   save.questStatus.pirate_charm = data.pirate_charm;

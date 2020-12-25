@@ -2,7 +2,7 @@ import { InjectCore } from 'modloader64_api/CoreInjection';
 import { bus, EventHandler, EventsClient } from 'modloader64_api/EventHandler';
 import { INetworkPlayer, LobbyData, NetworkHandler, IPacketHeader } from 'modloader64_api/NetworkHandler';
 import * as API from 'WindWaker/API/Imports';
-import { createInventoryFromContext, createQuestFromContext, mergeInventoryData, mergeQuestData, InventorySave, applyInventoryToContext, applyQuestSaveToContext, QuestSave, IQuestSave } from './data/WWOSaveData';
+import { createInventoryFromContext, createQuestFromContext, mergeInventoryData, mergeQuestData, InventorySave, applyInventoryToContext, applyQuestSaveToContext, QuestSave } from './data/WWOSaveData';
 import { WWO_DownloadRequestPacket, WWO_SubscreenSyncPacket, WWO_ScenePacket, WWO_SceneRequestPacket, WWO_DownloadResponsePacket, WWO_DownloadResponsePacket2, WWO_ClientFlagUpdate, WWO_ServerFlagUpdate, } from './data/WWOPackets';
 import path from 'path';
 import { GUITunnelPacket } from 'modloader64_api/GUITunnel';
@@ -82,7 +82,6 @@ export class WWOnlineClient {
         mergeInventoryData(this.clientStorage.inventoryStorage, inventory);
         mergeQuestData(this.clientStorage.questStorage, quest);
 
-
         this.ModLoader.clientSide.sendPacket(
             new WWO_SubscreenSyncPacket(this.clientStorage.inventoryStorage,
                 this.clientStorage.questStorage,
@@ -92,6 +91,9 @@ export class WWOnlineClient {
     }
 
     updateFlags() {
+        
+        let swordLevel: any = parseFlagChanges(this.core.save.questStatus.swordLevel, this.clientStorage.questStorage.swordLevel);
+        let shieldLevel: any = parseFlagChanges(this.core.save.questStatus.shieldLevel, this.clientStorage.questStorage.shieldLevel);
         let bracelet: any = parseFlagChanges(this.core.save.questStatus.bracelet, this.clientStorage.questStorage.bracelet);
         let pirate_charm: any = parseFlagChanges(this.core.save.questStatus.pirate_charm, this.clientStorage.questStorage.pirate_charm);
         let hero_charm: any = parseFlagChanges(this.core.save.questStatus.hero_charm, this.clientStorage.questStorage.hero_charm);
@@ -104,7 +106,19 @@ export class WWOnlineClient {
         let openChart: any = parseFlagChanges(this.core.save.questStatus.opened_charts, this.clientStorage.questStorage.opened_charts);
         let ownChart: any = parseFlagChanges(this.core.save.questStatus.owned_charts, this.clientStorage.questStorage.owned_charts);
 
+        let spoils_slots: any = parseFlagChanges(this.core.save.inventory.spoils_slots, this.clientStorage.inventoryStorage.spoils_slots);
+        let bait_slots: any = parseFlagChanges(this.core.save.inventory.bait_slots, this.clientStorage.inventoryStorage.bait_slots);
+        let delivery_slots : any = parseFlagChanges(this.core.save.inventory.delivery_slots, this.clientStorage.inventoryStorage.delivery_slots);
+        let owned_delivery: any = parseFlagChanges(this.core.save.inventory.owned_delivery, this.clientStorage.inventoryStorage.owned_delivery);
+        let owned_spoils : any = parseFlagChanges(this.core.save.inventory.owned_spoils, this.clientStorage.inventoryStorage.owned_spoils);
+        let owned_bait: any = parseFlagChanges(this.core.save.inventory.owned_bait, this.clientStorage.inventoryStorage.owned_bait);
+        let count_spoils : any = parseFlagChanges(this.core.save.inventory.count_spoils, this.clientStorage.inventoryStorage.count_spoils);
+        let count_delivery: any = parseFlagChanges(this.core.save.inventory.count_delivery, this.clientStorage.inventoryStorage.count_delivery);
+        let count_bait : any = parseFlagChanges(this.core.save.inventory.count_bait, this.clientStorage.inventoryStorage.count_bait);
+        
         this.ModLoader.clientSide.sendPacket(new WWO_ClientFlagUpdate(
+            this.clientStorage.questStorage.swordLevel,
+            this.clientStorage.questStorage.shieldLevel,
             this.clientStorage.questStorage.bracelet,
             this.clientStorage.questStorage.pirate_charm,
             this.clientStorage.questStorage.hero_charm,
@@ -116,6 +130,15 @@ export class WWOnlineClient {
             this.clientStorage.questStorage.completed_charts,
             this.clientStorage.questStorage.opened_charts,
             this.clientStorage.questStorage.owned_charts,
+            this.clientStorage.inventoryStorage.spoils_slots,
+            this.clientStorage.inventoryStorage.bait_slots,
+            this.clientStorage.inventoryStorage.delivery_slots,
+            this.clientStorage.inventoryStorage.owned_delivery,
+            this.clientStorage.inventoryStorage.owned_spoils,
+            this.clientStorage.inventoryStorage.owned_bait,
+            this.clientStorage.inventoryStorage.count_spoils,
+            this.clientStorage.inventoryStorage.count_delivery,
+            this.clientStorage.inventoryStorage.count_bait,
             this.ModLoader.clientLobby));
     }
     @EventHandler(API.WWEvents.ON_SAVE_LOADED)
@@ -237,7 +260,7 @@ export class WWOnlineClient {
         ) as InventorySave;
         let quest: QuestSave = createQuestFromContext(
             this.core.save.questStatus
-        ) as IQuestSave;
+        ) as QuestSave;
 
         mergeInventoryData(this.clientStorage.inventoryStorage, inventory);
         mergeQuestData(this.clientStorage.questStorage, quest);
@@ -312,7 +335,16 @@ export class WWOnlineClient {
         let compChart = this.core.save.questStatus.completed_charts;
         let openChart = this.core.save.questStatus.opened_charts;
         let ownChart = this.core.save.questStatus.owned_charts;
-
+        let spoils_slots = this.core.save.inventory.spoils_slots;
+        let bait_slots = this.core.save.inventory.bait_slots;
+        let delivery_slots = this.core.save.inventory.delivery_slots;
+        let owned_delivery = this.core.save.inventory.owned_delivery;
+        let owned_spoils = this.core.save.inventory.owned_spoils;
+        let owned_bait = this.core.save.inventory.owned_bait;
+        let count_spoils = this.core.save.inventory.count_spoils;
+        let count_delivery = this.core.save.inventory.count_delivery;
+        let count_bait = this.core.save.inventory.count_bait;
+        
         parseFlagChanges(
             bracelet,
             this.clientStorage.questStorage.bracelet

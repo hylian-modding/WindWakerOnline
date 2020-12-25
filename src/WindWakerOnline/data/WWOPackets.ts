@@ -65,7 +65,8 @@ export class WWO_DownloadRequestPacket extends Packet {
 
 
 export class WWO_ClientFlagUpdate extends Packet {
-
+  swordLevel: any;
+  shieldLevel: any;
   bracelet: any;
   pirate_charm: any;
   hero_charm: any;
@@ -77,8 +78,19 @@ export class WWO_ClientFlagUpdate extends Packet {
   compChart: any;
   openChart: any;
   ownChart: any;
+  spoils_slots: any;
+  bait_slots: any;
+  delivery_slots: any;
+  owned_delivery: any;
+  owned_spoils: any;
+  owned_bait: any;
+  count_spoils: any;
+  count_delivery: any;
+  count_bait: any;
 
   constructor(
+    swordLevel: any,
+    shieldLevel: any,
     bracelet: any,
     pirate_charm: any,
     hero_charm: any,
@@ -90,10 +102,20 @@ export class WWO_ClientFlagUpdate extends Packet {
     compChart: any,
     openChart: any,
     ownChart: any,
+    spoils_slots: any,
+    bait_slots: any,
+    delivery_slots: any,
+    owned_delivery: any,
+    owned_spoils: any,
+    owned_bait: any,
+    count_spoils: any,
+    count_delivery: any,
+    count_bait: any,
     lobby: string
   ) {
     super('WWO_ClientFlagUpdate', 'WWOnline', lobby, false);
-
+    this.swordLevel = swordLevel;
+    this.shieldLevel = shieldLevel;
     this.bracelet = bracelet;
     this.pirate_charm = pirate_charm;
     this.hero_charm = hero_charm;
@@ -105,11 +127,21 @@ export class WWO_ClientFlagUpdate extends Packet {
     this.compChart = compChart;
     this.openChart = openChart;
     this.ownChart = ownChart;
+    this.spoils_slots = spoils_slots;
+    this.bait_slots = bait_slots;
+    this.delivery_slots = delivery_slots;
+    this.owned_delivery = owned_delivery;
+    this.owned_spoils = owned_spoils;
+    this.owned_bait = owned_bait;
+    this.count_spoils = count_spoils;
+    this.count_delivery = count_delivery;
+    this.count_bait = count_bait;
   }
 }
 
 export class WWO_ServerFlagUpdate extends Packet {
-
+  swordLevel: any;
+  shieldLevel: any;
   bracelet: any;
   pirate_charm: any;
   hero_charm: any;
@@ -121,8 +153,18 @@ export class WWO_ServerFlagUpdate extends Packet {
   compChart: any;
   openChart: any;
   ownChart: any;
-
+  spoils_slots: any;
+  bait_slots: any;
+  delivery_slots: any;
+  owned_delivery: any;
+  owned_spoils: any;
+  owned_bait: any;
+  count_spoils: any;
+  count_delivery: any;
+  count_bait: any;
   constructor(
+    swordLevel: any,
+    shieldLevel: any,
     bracelet: any,
     pirate_charm: any,
     hero_charm: any,
@@ -134,10 +176,20 @@ export class WWO_ServerFlagUpdate extends Packet {
     compChart: any,
     openChart: any,
     ownChart: any,
+    spoils_slots: any,
+    bait_slots: any,
+    delivery_slots: any,
+    owned_delivery: any,
+    owned_spoils: any,
+    owned_bait: any,
+    count_spoils: any,
+    count_delivery: any,
+    count_bait: any,
     lobby: string
   ) {
     super('WWO_ServerFlagUpdate', 'WWOnline', lobby, false);
-
+    this.swordLevel = swordLevel;
+    this.shieldLevel = shieldLevel;
     this.bracelet = bracelet;
     this.pirate_charm = pirate_charm;
     this.hero_charm = hero_charm;
@@ -149,5 +201,14 @@ export class WWO_ServerFlagUpdate extends Packet {
     this.compChart = compChart;
     this.openChart = openChart;
     this.ownChart = ownChart;
+    this.spoils_slots = spoils_slots;
+    this.bait_slots = bait_slots;
+    this.delivery_slots = delivery_slots;
+    this.owned_delivery = owned_delivery;
+    this.owned_spoils = owned_spoils;
+    this.owned_bait = owned_bait;
+    this.count_spoils = count_spoils;
+    this.count_delivery = count_delivery;
+    this.count_bait = count_bait;
   }
 }

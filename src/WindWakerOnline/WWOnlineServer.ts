@@ -104,7 +104,7 @@ export class WWOnlineServer {
                 packet.scene +
                 '.'
             );
-            
+
             bus.emit(WWOEvents.SERVER_PLAYER_CHANGED_SCENES, new WWOPlayerScene(packet.player, packet.lobby, packet.scene));
         } catch (err) {
         }
@@ -135,6 +135,8 @@ export class WWOnlineServer {
                         packet.lobby
                     ),
                     new WWO_ServerFlagUpdate(
+                        storage.questStorage.swordLevel,
+                        storage.questStorage.shieldLevel,
                         storage.questStorage.bracelet,
                         storage.questStorage.pirate_charm,
                         storage.questStorage.hero_charm,
@@ -146,6 +148,15 @@ export class WWOnlineServer {
                         storage.questStorage.completed_charts,
                         storage.questStorage.opened_charts,
                         storage.questStorage.owned_charts,
+                        storage.inventoryStorage.spoils_slots,
+                        storage.inventoryStorage.bait_slots,
+                        storage.inventoryStorage.delivery_slots,
+                        storage.inventoryStorage.owned_delivery,
+                        storage.inventoryStorage.owned_spoils,
+                        storage.inventoryStorage.owned_bait,
+                        storage.inventoryStorage.count_spoils,
+                        storage.inventoryStorage.count_delivery,
+                        storage.inventoryStorage.count_bait,
                         packet.lobby
                     ),
                     packet.lobby
@@ -259,22 +270,30 @@ export class WWOnlineServer {
                 storage.questStorage.owned_charts[i] |= value;
             }
         }
-        this.ModLoader.serverSide.sendPacket(
-            new WWO_ServerFlagUpdate(
-                storage.questStorage.bracelet,
-                storage.questStorage.pirate_charm,
-                storage.questStorage.hero_charm,
-                storage.questStorage.sectors,
-                storage.questStorage.deciphered_triforce,
-                storage.questStorage.pearls,
-                storage.questStorage.songs,
-                storage.questStorage.triforce,
-                storage.questStorage.completed_charts,
-                storage.questStorage.opened_charts,
-                storage.questStorage.owned_charts,
-                packet.lobby
-            )
-        );
+        this.ModLoader.serverSide.sendPacket(new WWO_ServerFlagUpdate(
+            storage.questStorage.swordLevel,
+            storage.questStorage.shieldLevel,
+            storage.questStorage.bracelet,
+            storage.questStorage.pirate_charm,
+            storage.questStorage.hero_charm,
+            storage.questStorage.sectors,
+            storage.questStorage.deciphered_triforce,
+            storage.questStorage.pearls,
+            storage.questStorage.songs,
+            storage.questStorage.triforce,
+            storage.questStorage.completed_charts,
+            storage.questStorage.opened_charts,
+            storage.questStorage.owned_charts,
+            storage.inventoryStorage.spoils_slots,
+            storage.inventoryStorage.bait_slots,
+            storage.inventoryStorage.delivery_slots,
+            storage.inventoryStorage.owned_delivery,
+            storage.inventoryStorage.owned_spoils,
+            storage.inventoryStorage.owned_bait,
+            storage.inventoryStorage.count_spoils,
+            storage.inventoryStorage.count_delivery,
+            storage.inventoryStorage.count_bait,
+            packet.lobby
+        ));
     }
-
 }
