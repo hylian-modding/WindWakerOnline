@@ -6,6 +6,7 @@ import {
 import { InventorySave, QuestSave } from './WWOSaveData';
 import * as API from 'WindWaker/API/Imports';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
+import { PuppetData } from './linkPuppet/PuppetData';
 
 
 export class WWO_SubscreenSyncPacket extends Packet {
@@ -210,5 +211,23 @@ export class WWO_ServerFlagUpdate extends Packet {
     this.count_spoils = count_spoils;
     this.count_delivery = count_delivery;
     this.count_bait = count_bait;
+  }
+}
+
+export class WWO_PuppetPacket {
+  data: PuppetData;
+
+  constructor(puppetData: PuppetData, lobby: string) {
+    this.data = puppetData;
+  }
+}
+
+export class WWO_PuppetWrapperPacket extends UDPPacket {
+
+  data: string;
+
+  constructor(packet: WWO_PuppetPacket, lobby: string) {
+    super('WWO_PuppetPacket', 'WWO', lobby, false);
+    this.data = JSON.stringify(packet);
   }
 }

@@ -476,8 +476,7 @@ export class WWOnlineClient {
         if (
             !this.core.helper.isTitleScreen() &&
             this.core.helper.isLinkExists() &&
-            this.core.helper.isSceneNameValid() &&
-            !this.core.helper.isSceneChange()
+            this.core.helper.isSceneNameValid()
         ) {
             if (!this.core.helper.isPaused()) {
                 if (!this.clientStorage.first_time_sync) {
@@ -488,6 +487,7 @@ export class WWOnlineClient {
                         this.clientStorage.needs_update = true;
                         this.counter = 0;
                     }
+                    if(!this.core.helper.isLinkControllable()) this.clientStorage.needs_update = true;
                     if (this.core.helper.isLinkControllable() && this.clientStorage.needs_update && this.LobbyConfig.data_syncing) {
                         this.updateInventory();
                         this.updateFlags();
