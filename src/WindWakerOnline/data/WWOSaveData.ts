@@ -242,6 +242,7 @@ export function applyInventoryToContext(
 }
 
 export class QuestSave implements API.IQuestStatus {
+  hasTunic!: boolean;
   swordEquip!: number;
   shieldEquip!: number;
   braceletEquip!: number;
@@ -262,6 +263,7 @@ export class QuestSave implements API.IQuestStatus {
 
 export function createQuestFromContext(save: API.IQuestStatus): QuestSave {
   let data = new QuestSave();
+  data.hasTunic = save.hasTunic;
   data.swordLevel = save.swordLevel;
   data.shieldLevel = save.shieldLevel;
   data.bracelet = save.bracelet;
@@ -286,6 +288,10 @@ export function mergeQuestData(
   save: QuestSave,
   incoming: QuestSave,
 ) {
+  if(incoming.hasTunic > save.hasTunic)
+  {
+    save.hasTunic = incoming.hasTunic;
+  }
   if (incoming.pearls !== save.pearls) {
     save.pearls = incoming.pearls;
   }
@@ -319,39 +325,27 @@ export function mergeQuestData(
   if (incoming.triforce !== save.triforce) {
     save.triforce = incoming.triforce;
   }
-  if (incoming.swordEquip !== save.swordEquip) {
-    if (incoming.swordEquip > save.swordEquip) {
-      save.swordEquip = incoming.swordEquip;
-    }
-    else if (incoming.swordEquip === 0xFF) {
-      save.swordEquip == 0xFF;
-    }
-  }
-  if (incoming.shieldEquip !== save.shieldEquip) {
-    if (incoming.shieldEquip > save.shieldEquip) {
-      save.shieldEquip = incoming.shieldEquip;
-    }
-    else if (incoming.shieldEquip === 0xFF) {
-      save.shieldEquip == 0xFF;
-    }
-  }
-  if (incoming.braceletEquip !== save.braceletEquip) {
-    if (incoming.braceletEquip > save.braceletEquip) {
-      save.braceletEquip = incoming.braceletEquip;
-    }
-    else if (incoming.braceletEquip === 0xFF) {
-      save.braceletEquip == 0xFF;
-    }
-  }
-  if (incoming.swordLevel !== save.swordLevel) {
+  //Should only update equip if incoming is not "empty"(0xFF, 0x0) or is greater than current equip
+  //Hopefully prevents downgrading?
+  if (save.swordEquip === 0xFF && incoming.swordEquip < save.swordEquip) save.swordEquip = incoming.swordEquip;
+  else if (incoming.swordEquip !== 0xFF && incoming.swordEquip > save.swordEquip) save.swordEquip = incoming.swordEquip;
+
+  if (save.shieldEquip === 0xFF && incoming.shieldEquip < save.shieldEquip) save.shieldEquip = incoming.shieldEquip;
+  else if (incoming.shieldEquip !== 0xFF && incoming.shieldEquip > save.shieldEquip) save.shieldEquip = incoming.shieldEquip;
+
+  if (save.braceletEquip === 0xFF && incoming.braceletEquip < save.braceletEquip) save.braceletEquip = incoming.braceletEquip;
+  else if (incoming.braceletEquip !== 0xFF && incoming.braceletEquip > save.braceletEquip) save.braceletEquip = incoming.braceletEquip;
+
+  if (incoming.swordLevel > save.swordLevel) {
     save.swordLevel = incoming.swordLevel;
   }
-  if (incoming.shieldLevel !== save.shieldLevel) {
+  if (incoming.shieldLevel > save.shieldLevel) {
     save.shieldLevel = incoming.shieldLevel;
   }
 }
 
 export function applyQuestSaveToContext(data: QuestSave, save: API.ISaveContext) {
+  save.questStatus.hasTunic = data.hasTunic;
   save.questStatus.swordLevel = data.swordLevel;
   save.questStatus.shieldLevel = data.shieldLevel;
   save.questStatus.swordEquip = data.swordEquip;

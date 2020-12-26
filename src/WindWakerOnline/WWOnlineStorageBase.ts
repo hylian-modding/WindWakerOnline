@@ -12,10 +12,10 @@ export class WWOnlineStorageBase {
 }
 export class QuestStorageBase implements IQuestStatus{
   constructor() {}
-
-  swordEquip: number = 0;
-  shieldEquip: number = 0;
-  braceletEquip: number = 0;
+  hasTunic: boolean = false;
+  swordEquip: number = 0xFF;
+  shieldEquip: number = 0xFF;
+  braceletEquip: number = 0xFF;
   swordLevel: Buffer = Buffer.alloc(0x1);
   shieldLevel: Buffer = Buffer.alloc(0x1);
   songs: Buffer = Buffer.alloc(0x1);

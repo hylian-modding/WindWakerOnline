@@ -474,9 +474,9 @@ export class WWOnlineClient {
     @onTick()
     onTick() {
         if (
-            !this.core.helper.isTitleScreen() && 
+            !this.core.helper.isTitleScreen() &&
             this.core.helper.isLinkExists() &&
-            this.core.helper.isSceneNameValid() && 
+            this.core.helper.isSceneNameValid() &&
             !this.core.helper.isSceneChange()
         ) {
             if (!this.core.helper.isPaused()) {
@@ -484,21 +484,24 @@ export class WWOnlineClient {
                     return;
                 }
                 if (this.LobbyConfig.data_syncing) {
-                    if (!this.core.helper.isLinkControllable() || this.counter >= 400) {
+                    if (this.counter >= 300) {
                         this.clientStorage.needs_update = true;
                         this.counter = 0;
-                    } else if (
-                        (this.core.helper.isLinkControllable()) &&
-                        this.clientStorage.needs_update &&
-                        this.LobbyConfig.data_syncing
-                    ) {
+                    }
+                    if (this.core.helper.isLinkControllable() && this.clientStorage.needs_update && this.LobbyConfig.data_syncing) {
                         this.updateInventory();
                         this.updateFlags();
                         this.clientStorage.needs_update = false;
                     }
                 }
-                this.counter += 1;
             }
+            if (this.LobbyConfig.data_syncing && this.core.helper.isPaused()){
+                if (!this.clientStorage.first_time_sync) {
+                    return;
+                } 
+                this.clientStorage.needs_update = true;
+            }
+            this.counter += 1;
         }
     }
 }
