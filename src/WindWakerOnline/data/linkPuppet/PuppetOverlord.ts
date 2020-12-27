@@ -162,6 +162,7 @@ export class PuppetOverlord {
       }
 
       if (scene !== this.fakeClientPuppet.scene && puppet.isSpawned && !puppet.isShoveled) {
+        console.log("shoveling puppet");
         puppet.shovel();
       }
 
@@ -208,27 +209,20 @@ export class PuppetOverlord {
     );
   }
 
-  // TODO
-  isCurrentlyWarping() {
-    return false;
-  }
-
   @onTick()
   onTick() {
     if (this.core.helper.isTitleScreen() ||
       this.core.helper.isPaused() ||
       !this.core.helper.isLinkExists() ||
-      !this.core.helper.isSceneNameValid()
+      !this.core.helper.isSceneNameValid() ||
+      !this.core.helper.isLinkControllable()
     ) {
       return;
     }
-    if (
-      !this.isCurrentlyWarping()
-    ) {
-      this.processNewPlayers();
-      this.processAwaitingSpawns();
-      this.lookForMissingOrStrandedPuppets();
-    }
+
+    this.processNewPlayers();
+    this.processAwaitingSpawns();
+    this.lookForMissingOrStrandedPuppets();
     this.sendPuppetPacket();
   }
 
@@ -265,14 +259,6 @@ export class PuppetOverlord {
 
   @NetworkHandler('WWO_PuppetPacket')
   onPuppetData_client(packet: WWO_PuppetWrapperPacket) {
-    if (this.core.helper.isTitleScreen() ||
-      this.core.helper.isPaused() ||
-      this.core.helper.isSceneChange() ||
-      !this.core.helper.isLinkExists() ||
-      !this.core.helper.isSceneNameValid()
-    ) {
-      return;
-    }
     this.processPuppetPacket(packet);
   }
 

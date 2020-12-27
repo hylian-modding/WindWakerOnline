@@ -66,6 +66,7 @@ class WindWakerOnline implements IPlugin, IWWOnlineHelpers, IPluginServerConfig 
 
     }
     onTick(frame?: number | undefined): void {
+
         this.ModLoader.emulator.rdramWrite32(0x80234BF8, 0x495CB408);
 
         const customCode1 = Buffer.from(

@@ -15,6 +15,8 @@ typedef struct NPC_Test_class
 	s8 mHeadJntIdx;
 	s8 mSpineJntIdx;
 
+    s8 drawPreventTimer;
+
 	u32 packet[4];
 
 	J3DShape *zoff_blend[4];

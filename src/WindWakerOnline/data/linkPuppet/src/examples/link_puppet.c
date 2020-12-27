@@ -62,7 +62,7 @@ int daNPCTest_Create(NPC_Test_class *this)
   }
 
   // Connect our transform matrix to our model's transform matrix
-  this->parent.parent.mpMtx = &this->parent.mpMcaMorf->mpModel->mBaseMtx;
+  // this->parent.parent.mpMtx = &this->parent.mpMcaMorf->mpModel->mBaseMtx;
 
   // Set the actor's Cc collision.
   dCcD_Stts__Init(&this->parent.mStts, 0xff, 0xff, &this->parent.parent);
@@ -71,7 +71,19 @@ int daNPCTest_Create(NPC_Test_class *this)
 
   mDoExt_McaMorf__setMorf(this->parent.mpMcaMorf, 0.0f);
 
-  this->transform_space = *(void **)0x81802000;
+  *(void **)0x81801FFC = g_dComIfG_gameInfo.mPlay.mpCurPlayerActor->mpCLModel->mpNodeMtx; // Player Model
+
+  for (u32 i = 0; i < 128; i += 4)
+  {
+    if (*(void **)(0x81802000 + i) == 0x00000000)
+    {
+      *(void **)(0x81802000 + i) = this->parent.mpMcaMorf->mpModel->mpNodeMtx; // Puppet Model
+      break;
+    }
+  }
+
+  this->drawPreventTimer = 0;
+
   return cPhs_COMPLEATE_e;
 }
 
@@ -108,11 +120,11 @@ int daNPCTest_Execute(NPC_Test_class *this)
 
   daNPCTest__eventOrder(this);
 
-  daNPCTest__setMtx(this, false);
+  // daNPCTest__setMtx(this, false);
 
   // Set the actor's Cc collision with a height of 50 and a radius of 140.
   //fopNpc_npc_c__setCollision(&this->parent, 60.0f, 50.0f);
-  fopNpc_npc_c__setCollision(&this->parent, 25.0f, 40.0f);
+  fopNpc_npc_c__setCollision(&this->parent, 15.0f, 40.0f);
 
   return 1;
 }
@@ -520,8 +532,6 @@ void daNPCTest__UpdatePathFollowing(NPC_Test_class *this)
 
 void daNPCTest__setMtx(NPC_Test_class *this, bool unk)
 {
-  //mDoExt_McaMorf__play(this->parent.mpMcaMorf, &this->parent.parent.mCurrent.mPos, 0, 0);
-
   // Update the model's transform.
   PSMTXTrans(this->parent.parent.mCurrent.mPos.x, this->parent.parent.mCurrent.mPos.y, this->parent.parent.mCurrent.mPos.z, &mDoMtx_stack_c__now);
   mDoMtx_YrotM(&mDoMtx_stack_c__now, this->parent.parent.mCurrent.mRot.y);
@@ -529,8 +539,6 @@ void daNPCTest__setMtx(NPC_Test_class *this, bool unk)
 
   // Calculate how the vertices should be deformed by the animation.
   mDoExt_McaMorf__calc(this->parent.mpMcaMorf);
-
-  daNPCTest__setAttention(this, unk);
 }
 
 /** ATTENTION FUNCTIONS **/
@@ -548,20 +556,6 @@ bool daNPCTest__chkAttention(NPC_Test_class *this)
   }
 }
 
-void daNPCTest__setAttention(NPC_Test_class *this, bool unk)
-{
-  // Set the position of the yellow targeting arrow that appears above the NPC.
-  this->parent.parent.mAttentionPos.x = this->parent.parent.mCurrent.mPos.x;
-  this->parent.parent.mAttentionPos.y = this->parent.parent.mCurrent.mPos.y + daNPCTest__JntCtrl_Params.mAttArrowYOffset;
-  this->parent.parent.mAttentionPos.z = this->parent.parent.mCurrent.mPos.z;
-
-  // Set the position Link looks at when locked on to the NPC.
-  // TODO: This is just a quick hack. Vanilla NPCs set this in a more complex way, presumably to account for the head's rotation.
-  this->parent.parent.mEyePos.x = this->parent.parent.mCurrent.mPos.x;
-  this->parent.parent.mEyePos.y = this->parent.parent.mCurrent.mPos.y + 100.0f;
-  this->parent.parent.mEyePos.z = this->parent.parent.mCurrent.mPos.z;
-}
-
 int daNPCTest_nodeCallBack(J3DNode *node, int unk)
 {
   if (unk)
@@ -570,16 +564,12 @@ int daNPCTest_nodeCallBack(J3DNode *node, int unk)
   }
 
   J3DModel *model = J3DGraphBase__j3dSys.mpCurModel;
-
   NPC_Test_class *this = (NPC_Test_class *)model->mpUserData;
 
   if (!this)
   {
     return 1;
   }
-
-  // Update this node's transform.
-  // PSMTXCopy(this->transform_space + node->mAnmMatrixIdx, model->mpNodeMtx + node->mAnmMatrixIdx);
 
   return 1;
 }

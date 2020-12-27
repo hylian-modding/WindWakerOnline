@@ -102,12 +102,12 @@ export class Puppet {
           this.isSpawning = false;
           bus.emit(WWOEvents.PLAYER_PUPPET_SPAWNED, this);
         }
-      }, 90);
+      }, 30);
     }
   }
 
   processIncomingPuppetData(data: PuppetData, remote: RemoteSoundPlayRequest) {
-    if (this.isSpawned && !this.isShoveled) {
+    if (this.core.helper.isLinkControllable() && this.isSpawned && !this.isShoveled) {
       Object.keys(data).forEach((key: string) => {
         if (key === "sound") {
           if (!remote.isCanceled) {

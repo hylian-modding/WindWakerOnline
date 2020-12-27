@@ -10,7 +10,6 @@ export class PuppetData {
   pointer: number;
   ModLoader: IModLoaderAPI;
   core: IWWCore;
-  time: number = 0;
   private readonly copyFields: string[] = new Array<string>();
   private storage: WWOnlineStorageClient;
 
@@ -25,8 +24,8 @@ export class PuppetData {
     this.ModLoader = ModLoader;
     this.core = core;
     this.copyFields.push('pos');
-    this.copyFields.push('rot');
-
+    this.copyFields.push('matrixData');
+    //this.copyFields.push('rot');
   }
 
   get pos(): Buffer {
@@ -46,6 +45,24 @@ export class PuppetData {
     this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0x1F0, rot);
     this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0x204, rot);
     this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0x20C, rot);
+  }
+
+  get matrixData(): Buffer {
+    if (this.pointer === 0x0) {
+      return Buffer.from([0x0]);
+    }
+    let playerDataPtr = this.ModLoader.emulator.rdramRead32(0x81801FFC);
+    let data = this.ModLoader.emulator.rdramReadBuffer(playerDataPtr, 0x1E90); // 0x1E90
+    return data;
+  }
+
+  set matrixData(data: Buffer) {
+    if (this.pointer === 0x0) {
+      return;
+    }
+
+    let puppetDataPtr = this.ModLoader.emulator.rdramRead32(0x81802000);
+    this.ModLoader.emulator.rdramWriteBuffer(puppetDataPtr, data);
   }
 
   toJSON() {
