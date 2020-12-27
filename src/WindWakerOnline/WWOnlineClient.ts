@@ -76,7 +76,6 @@ export class WWOnlineClient {
     }
 
     updateInventory() {
-        this.ModLoader.logger.info('updateInventory()');
         let inventory = createInventoryFromContext(this.core.save);
         let quest = createQuestFromContext(this.core.save.questStatus);
 

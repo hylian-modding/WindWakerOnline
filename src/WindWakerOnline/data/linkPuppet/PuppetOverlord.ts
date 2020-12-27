@@ -223,14 +223,13 @@ export class PuppetOverlord {
       return;
     }
     if (
-      !this.isCurrentlyWarping() &&
-      this.core.helper.isSceneNameValid()
+      !this.isCurrentlyWarping()
     ) {
       this.processNewPlayers();
       this.processAwaitingSpawns();
       this.lookForMissingOrStrandedPuppets();
-      this.sendPuppetPacket();
     }
+    this.sendPuppetPacket();
   }
 
   @EventHandler(EventsClient.ON_PLAYER_JOIN)

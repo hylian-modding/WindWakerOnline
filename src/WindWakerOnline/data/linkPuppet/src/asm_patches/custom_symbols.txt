@@ -1,0 +1,2 @@
+sys/main.dol:
+  check_run_custom_code: 0x81800000

@@ -102,7 +102,7 @@ export class Puppet {
           this.isSpawning = false;
           bus.emit(WWOEvents.PLAYER_PUPPET_SPAWNED, this);
         }
-      }, 55);
+      }, 90);
     }
   }
 

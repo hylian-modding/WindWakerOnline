@@ -1,0 +1,12 @@
+__pycache__
+/wip
+settings.txt
+/build
+/dist
+/models/*
+!/models/About Custom Models.txt
+/asm/maps-out
+profileresults.txt
+/keys/seed_key.py
+/keys/build_key.txt
+/__pycache__
