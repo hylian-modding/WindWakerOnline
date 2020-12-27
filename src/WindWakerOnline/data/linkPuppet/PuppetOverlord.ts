@@ -144,7 +144,7 @@ export class PuppetOverlord {
   processAwaitingSpawns() {
     if (this.awaiting_spawn.length > 0 && !this.queuedSpawn) {
       let puppet: Puppet = this.awaiting_spawn.shift() as Puppet;
-      puppet.spawn();
+      if (puppet.scene == this.core.global.current_scene_name && this.core.helper.isLinkExists() && this.core.helper.isLinkControllable()) puppet.spawn();
     }
   }
 
@@ -215,21 +215,23 @@ export class PuppetOverlord {
 
   @onTick()
   onTick() {
-    if (this.core.helper.isTitleScreen() || this.core.helper.isPaused()) {
+    if (this.core.helper.isTitleScreen() ||
+      this.core.helper.isPaused() ||
+      !this.core.helper.isLinkExists() ||
+      !this.core.helper.isSceneNameValid()
+    ) {
       return;
     }
     if (
-      !this.isCurrentlyWarping()
+      !this.isCurrentlyWarping() &&
+      this.core.helper.isSceneNameValid()
     ) {
       this.processNewPlayers();
       this.processAwaitingSpawns();
       this.lookForMissingOrStrandedPuppets();
+      this.sendPuppetPacket();
     }
-    this.sendPuppetPacket();
   }
-
-
-
 
   @EventHandler(EventsClient.ON_PLAYER_JOIN)
   onPlayerJoin(player: INetworkPlayer) {
@@ -265,11 +267,13 @@ export class PuppetOverlord {
   @NetworkHandler('WWO_PuppetPacket')
   onPuppetData_client(packet: WWO_PuppetWrapperPacket) {
     if (this.core.helper.isTitleScreen() ||
-      this.core.helper.isPaused()
+      this.core.helper.isPaused() ||
+      this.core.helper.isSceneChange() ||
+      !this.core.helper.isLinkExists() ||
+      !this.core.helper.isSceneNameValid()
     ) {
       return;
     }
-
     this.processPuppetPacket(packet);
   }
 

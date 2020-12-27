@@ -188,15 +188,15 @@ export class WWOnlineClient {
                 scene
             )
         );
-        //this.ModLoader.logger.info('client: I moved to scene ' + this.core.global.next_scene_name.toString().replace(/\0.*$/g, '') + '.');
-        this.ModLoader.logger.info('client: I moved to scene: ' + this.core.global.next_scene_name + '.');
+        //this.ModLoader.logger.info('client: I moved to scene ' + this.core.global.current_scene_name.toString().replace(/\0.*$/g, '') + '.');
+        this.ModLoader.logger.info('client: I moved to scene: ' + this.core.global.current_scene_name + '.');
 
         if (this.core.helper.isSceneNameValid()) {
             this.ModLoader.gui.setDiscordStatus(
                 new DiscordStatus(
                     'Playing WWOnline',
                     'In ' +
-                    this.core.global.next_scene_name + '.')
+                    this.core.global.current_scene_name + '.')
             );
         }
     }
@@ -207,7 +207,7 @@ export class WWOnlineClient {
         this.ModLoader.logger.info(
             'client receive: Player ' +
             packet.player.nickname +
-            ' moved to scene: ' + this.core.global.next_scene_name +
+            ' moved to scene: ' + this.core.global.current_scene_name +
             '.'
         );
 
@@ -220,7 +220,7 @@ export class WWOnlineClient {
             this.ModLoader.clientSide.sendPacketToSpecificPlayer(
                 new WWO_ScenePacket(
                     this.ModLoader.clientLobby,
-                    this.core.global.next_scene_name.toString().replace(/\0.*$/g, '')
+                    this.core.global.current_scene_name
                 ),
                 packet.player
             );

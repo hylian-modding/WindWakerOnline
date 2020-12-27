@@ -89,8 +89,9 @@ export class Puppet {
       this.isSpawning = true;
       this.data.pointer = 0x0;
       this.ModLoader.emulator.rdramWrite16(0x81801000, 0x00B5);
-      this.spawnHandle = this.ModLoader.utils.setIntervalFrames(() => {
-        if (this.isLastEntityPuppet()) {
+      let currentScene = this.core.global.current_scene_name;
+      this.spawnHandle = this.ModLoader.utils.setTimeoutFrames(() => {
+        if (this.isLastEntityPuppet() && currentScene === this.core.global.current_scene_name) {
           this.data.pointer = this.getLastEntityPtr();
           console.log("this.data.pointer: " + this.data.pointer.toString(16));
 
@@ -101,7 +102,7 @@ export class Puppet {
           this.isSpawning = false;
           bus.emit(WWOEvents.PLAYER_PUPPET_SPAWNED, this);
         }
-      }, 1);
+      }, 55);
     }
   }
 
