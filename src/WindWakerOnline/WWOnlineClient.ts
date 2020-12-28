@@ -17,6 +17,7 @@ import { SidedProxy, ProxySide } from 'modloader64_api/SidedProxy/SidedProxy';
 import { WWOnlineStorage } from './WWOnlineStorage';
 import { WWOEvents } from './WWOAPI/WWOAPI';
 import { parseFlagChanges } from './parseFlagChanges';
+import { PuppetOverlord } from './data/linkPuppet/PuppetOverlord';
 
 
 export class WWOnlineClient {
@@ -25,6 +26,9 @@ export class WWOnlineClient {
 
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
+
+    @SidedProxy(ProxySide.CLIENT, PuppetOverlord)
+    puppets!: PuppetOverlord;
 
     LobbyConfig: IWWOnlineLobbyConfig = {} as IWWOnlineLobbyConfig;
     clientStorage!: WWOnlineStorageClient;
@@ -56,6 +60,9 @@ export class WWOnlineClient {
     @Preinit()
     preinit() {
         this.config = this.ModLoader.config.registerConfigCategory("WWOnline") as WWOnlineConfigCategory;
+        if (this.puppets !== undefined){
+            this.puppets.clientStorage = this.clientStorage;
+        }
     }
 
     @Init()
@@ -502,5 +509,11 @@ export class WWOnlineClient {
             }
             this.counter += 1;
         }
+    }
+
+    @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
+    onRomPatched(evt: any){
+        let iso: Buffer = evt.rom;
+        iso.writeUInt16BE(0x0400, 0x444);
     }
 }

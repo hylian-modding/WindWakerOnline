@@ -9,3 +9,4 @@ external_cores/
 cores/
 modloader64-config.json
 modloader64-p2-config.json
+src/test.mp

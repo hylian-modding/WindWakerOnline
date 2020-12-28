@@ -15,7 +15,8 @@ export enum WWOEvents {
   GAINED_PIECE_OF_HEART = 'WWOnline:GainedPieceOfHeart',
   MAGIC_METER_INCREASED = 'WWOnline:GainedMagicMeter',
   ON_INVENTORY_UPDATE = 'WWOnline:OnInventoryUpdate',
-  ON_REMOTE_PLAY_SOUND = "OotOnline:OnRemotePlaySound"
+  ON_REMOTE_PLAY_SOUND = "WWOnline:OnRemotePlaySound",
+  ON_LOADING_ZONE = "WWOnline:OnLoadingZone"
 }
 
 export class WWOPlayerScene {

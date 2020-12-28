@@ -11,8 +11,6 @@ import { IWWCore, WWEvents } from 'WindWaker/API/WWAPI';
 import WWOnline from '../../WindWakerOnline';
 import { IWWOnlineHelpers, RemoteSoundPlayRequest, WWOEvents } from '../../WWOAPI/WWOAPI';
 
-const DEADBEEF_OFFSET: number = 0x288;
-
 export class Puppet {
   player: INetworkPlayer;
   id: string;
@@ -26,7 +24,8 @@ export class Puppet {
   ModLoader: IModLoaderAPI;
   parent: IWWOnlineHelpers;
   tunic_color!: number;
-  spawnHandle: any;
+  spawnHandle: any = undefined;
+  tossedPackets: number = -1;
 
   constructor(
     player: INetworkPlayer,
@@ -61,6 +60,7 @@ export class Puppet {
 
   isLastEntityPuppet(): boolean {
     let entityPtr = this.ModLoader.emulator.rdramRead32(0x8037202C);
+
     entityPtr -= 0xC4;
 
     if (this.prevLastEntityPtr == entityPtr) {
@@ -69,6 +69,7 @@ export class Puppet {
 
     let entityID = this.ModLoader.emulator.rdramRead16(entityPtr + 0x08);
     this.prevLastEntityPtr = entityPtr;
+
     return entityID === 0x00B5;
   }
 
@@ -84,13 +85,15 @@ export class Puppet {
       this.ModLoader.logger.debug('Puppet resurrected.');
       return;
     }
-    if (!this.isSpawned && !this.isSpawning) {
+    if (this.core.helper.isLinkControllable() && !this.isSpawned && !this.isSpawning && this.spawnHandle === undefined) {
       bus.emit(WWOEvents.PLAYER_PUPPET_PRESPAWN, this);
+
       this.isSpawning = true;
       this.data.pointer = 0x0;
       this.ModLoader.emulator.rdramWrite16(0x81801000, 0x00B5);
       let currentScene = this.core.global.current_scene_name;
-      this.spawnHandle = this.ModLoader.utils.setTimeoutFrames(() => {
+
+      this.spawnHandle = this.ModLoader.utils.setIntervalFrames(() => {
         if (this.isLastEntityPuppet() && currentScene === this.core.global.current_scene_name) {
           this.data.pointer = this.getLastEntityPtr();
           console.log("this.data.pointer: " + this.data.pointer.toString(16));
@@ -98,16 +101,20 @@ export class Puppet {
           this.doNotDespawnMe(this.data.pointer);
 
           this.void = this.ModLoader.math.rdramReadV3(this.data.pointer + 0x1F8);
+
+          this.ModLoader.utils.clearIntervalFrames(this.spawnHandle);
+          this.spawnHandle = undefined;
+
           this.isSpawned = true;
           this.isSpawning = false;
           bus.emit(WWOEvents.PLAYER_PUPPET_SPAWNED, this);
         }
-      }, 30);
+      }, 100);
     }
   }
 
   processIncomingPuppetData(data: PuppetData, remote: RemoteSoundPlayRequest) {
-    if (this.core.helper.isLinkControllable() && this.isSpawned && !this.isShoveled) {
+    if (this.isSpawned && !this.isShoveled && this.tossedPackets > 100) {
       Object.keys(data).forEach((key: string) => {
         if (key === "sound") {
           if (!remote.isCanceled) {
@@ -117,6 +124,9 @@ export class Puppet {
           (this.data as any)[key] = (data as any)[key];
         }
       });
+    }
+    if (this.tossedPackets <= 100) {
+      this.tossedPackets++;
     }
   }
 

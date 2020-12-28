@@ -48,19 +48,12 @@ export class PuppetData {
   }
 
   get matrixData(): Buffer {
-    if (this.pointer === 0x0) {
-      return Buffer.from([0x0]);
-    }
     let playerDataPtr = this.ModLoader.emulator.rdramRead32(0x81801FFC);
     let data = this.ModLoader.emulator.rdramReadBuffer(playerDataPtr, 0x1E90); // 0x1E90
     return data;
   }
 
   set matrixData(data: Buffer) {
-    if (this.pointer === 0x0) {
-      return;
-    }
-
     let puppetDataPtr = this.ModLoader.emulator.rdramRead32(0x81802000);
     this.ModLoader.emulator.rdramWriteBuffer(puppetDataPtr, data);
   }

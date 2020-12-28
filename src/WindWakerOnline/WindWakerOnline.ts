@@ -10,7 +10,6 @@ import { WWOnlineServer } from './WWOnlineServer';
 import { IPacketHeader } from 'modloader64_api/NetworkHandler';
 import { WWOnlineStorageClient } from './WWOnlineStorageClient';
 import { IWWOnlineHelpers } from './WWOAPI/WWOAPI';
-import { PuppetOverlord } from './data/linkPuppet/PuppetOverlord';
 
 export interface IWWOnlineLobbyConfig {
     data_syncing: boolean;
@@ -31,16 +30,10 @@ class WindWakerOnline implements IPlugin, IWWOnlineHelpers, IPluginServerConfig 
     @SidedProxy(ProxySide.SERVER, WWOnlineServer)
     server!: WWOnlineServer;
 
-    puppets: PuppetOverlord;
-
     // Storage
     LobbyConfig: IWWOnlineLobbyConfig = {} as IWWOnlineLobbyConfig;
     clientStorage: WWOnlineStorageClient = new WWOnlineStorageClient();
-
-    constructor() {
-        this.puppets = new PuppetOverlord(this, this.core, this.clientStorage);
-    }
-
+    
     sendPacketToPlayersInScene(packet: IPacketHeader): void {
         if (this.server !== undefined) {
             this.server.sendPacketToPlayersInScene(packet);
@@ -66,7 +59,6 @@ class WindWakerOnline implements IPlugin, IWWOnlineHelpers, IPluginServerConfig 
 
     }
     onTick(frame?: number | undefined): void {
-
         this.ModLoader.emulator.rdramWrite32(0x80234BF8, 0x495CB408);
 
         const customCode1 = Buffer.from(

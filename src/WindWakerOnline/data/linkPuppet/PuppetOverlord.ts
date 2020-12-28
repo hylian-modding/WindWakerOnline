@@ -10,16 +10,17 @@ import { IWWCore, WWEvents } from 'WindWaker/API/WWAPI';
 import { WWOnlineStorageClient } from '@WindWakerOnline/WWOnlineStorageClient';
 import { IWWOnlineHelpers, RemoteSoundPlayRequest, WWOEvents } from '@WindWakerOnline/WWOAPI/WWOAPI';
 import { WWO_PuppetPacket, WWO_PuppetWrapperPacket, WWO_ScenePacket, WWO_SceneRequestPacket } from '../WWOPackets';
+import { ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
 
 export class PuppetOverlord {
   private puppets: Map<string, Puppet> = new Map<string, Puppet>();
   private awaiting_spawn: Puppet[] = new Array<Puppet>();
   fakeClientPuppet!: Puppet;
   private amIAlone = true;
-  private playersAwaitingPuppets: INetworkPlayer[] = new Array<
-    INetworkPlayer
-  >();
-  private parent: IWWOnlineHelpers;
+  private playersAwaitingPuppets: INetworkPlayer[] = new Array<INetworkPlayer>();
+
+  @ParentReference()
+  private parent!: IWWOnlineHelpers;
   private queuedSpawn: boolean = false;
 
   rom!: Buffer;
@@ -29,12 +30,6 @@ export class PuppetOverlord {
   @InjectCore()
   private core!: IWWCore;
   clientStorage!: WWOnlineStorageClient;
-
-  constructor(parent: IWWOnlineHelpers, core: IWWCore, clientStorage: WWOnlineStorageClient) {
-    this.parent = parent;
-    this.core = core;
-    this.clientStorage = clientStorage;
-  }
 
   @Postinit()
   postinit(
@@ -236,7 +231,7 @@ export class PuppetOverlord {
     this.unregisterPuppet(player);
   }
 
-  //@EventHandler(WWOEvents.ON_LOADING_ZONE)
+  @EventHandler(WWOEvents.ON_LOADING_ZONE)
   onLoadingZone(evt: any) {
     this.localPlayerLoadingZone();
   }
@@ -249,6 +244,7 @@ export class PuppetOverlord {
 
   @NetworkHandler('WWO_ScenePacket')
   onSceneChange_client(packet: WWO_ScenePacket) {
+    console.log(packet);
     this.changePuppetScene(packet.player, packet.scene);
   }
 
