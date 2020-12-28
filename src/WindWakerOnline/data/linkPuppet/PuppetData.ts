@@ -2,6 +2,8 @@ import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
 import { bus, EventHandler } from 'modloader64_api/EventHandler';
 import { IWWCore } from 'WindWaker/API/WWAPI';
 import { WWOnlineStorageClient } from '@WindWakerOnline/WWOnlineStorageClient';
+import { SmartBuffer } from 'smart-buffer';
+import zlib from 'zlib';
 
 const actor = 0x0000
 const anim_data = 0x0144
@@ -12,6 +14,8 @@ export class PuppetData {
   core: IWWCore;
   private readonly copyFields: string[] = new Array<string>();
   private storage: WWOnlineStorageClient;
+  private matrixUpdateTicks: number = 0;
+  private matrixUpdateRate: number = 2;
 
   constructor(
     pointer: number,
@@ -48,14 +52,28 @@ export class PuppetData {
   }
 
   get matrixData(): Buffer {
-    let playerDataPtr = this.ModLoader.emulator.rdramRead32(0x81801FFC);
-    let data = this.ModLoader.emulator.rdramReadBuffer(playerDataPtr, 0x1E90); // 0x1E90
-    return data;
+    if (this.matrixUpdateTicks > this.matrixUpdateRate) {
+      let playerDataPtr = this.ModLoader.emulator.rdramRead32(0x81801FFC);
+      let data = this.ModLoader.emulator.rdramReadBuffer(playerDataPtr, 0x1E90); // 0x1E90
+      let b = new SmartBuffer();
+      b.writeUInt8(2);
+      let diff = zlib.deflateSync(data);
+      b.writeBuffer(diff);
+      this.matrixUpdateTicks = 0;
+      return b.toBuffer();
+    } else {
+      let b = new SmartBuffer();
+      b.writeUInt8(1);
+      this.matrixUpdateTicks++;
+      return b.toBuffer();
+    }
   }
 
   set matrixData(data: Buffer) {
     let puppetDataPtr = this.ModLoader.emulator.rdramRead32(0x81802000);
-    this.ModLoader.emulator.rdramWriteBuffer(puppetDataPtr, data);
+    if (data.readUInt8(0) === 2) {
+      this.ModLoader.emulator.rdramWriteBuffer(puppetDataPtr, zlib.inflateSync(data.slice(1)));
+    }
   }
 
   toJSON() {
