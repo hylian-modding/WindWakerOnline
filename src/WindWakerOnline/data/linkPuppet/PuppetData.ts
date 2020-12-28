@@ -15,7 +15,7 @@ export class PuppetData {
   private readonly copyFields: string[] = new Array<string>();
   private storage: WWOnlineStorageClient;
   private matrixUpdateTicks: number = 0;
-  private matrixUpdateRate: number = 2;
+  matrixUpdateRate: number = 2;
 
   constructor(
     pointer: number,
@@ -52,9 +52,8 @@ export class PuppetData {
   }
 
   get matrixData(): Buffer {
-    if (this.matrixUpdateTicks > this.matrixUpdateRate) {
-      let playerDataPtr = this.ModLoader.emulator.rdramRead32(0x81801FFC);
-      let data = this.ModLoader.emulator.rdramReadBuffer(playerDataPtr, 0x1E90); // 0x1E90
+    if (this.matrixUpdateTicks >= this.matrixUpdateRate) {
+      let data = this.ModLoader.emulator.rdramReadPtrBuffer(0x81801FFC, 0, 0x1E90); // 0x1E90
       let b = new SmartBuffer();
       b.writeUInt8(2);
       let diff = zlib.deflateSync(data);
@@ -70,9 +69,8 @@ export class PuppetData {
   }
 
   set matrixData(data: Buffer) {
-    let puppetDataPtr = this.ModLoader.emulator.rdramRead32(0x81802000);
     if (data.readUInt8(0) === 2) {
-      this.ModLoader.emulator.rdramWriteBuffer(puppetDataPtr, zlib.inflateSync(data.slice(1)));
+      this.ModLoader.emulator.rdramWritePtrBuffer(0x81802000, 0, zlib.inflateSync(data.slice(1)));
     }
   }
 

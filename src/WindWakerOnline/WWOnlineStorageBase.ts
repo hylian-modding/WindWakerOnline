@@ -7,6 +7,8 @@ import {
 
 export class WWOnlineStorageBase {
   constructor() {}
+  players: any = {};
+  networkPlayerInstances: any = {};
   inventoryStorage: InventoryStorageBase = new InventoryStorageBase();
   questStorage: QuestStorageBase = new QuestStorageBase();
 }

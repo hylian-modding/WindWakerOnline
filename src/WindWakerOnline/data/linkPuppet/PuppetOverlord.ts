@@ -11,6 +11,7 @@ import { WWOnlineStorageClient } from '@WindWakerOnline/WWOnlineStorageClient';
 import { IWWOnlineHelpers, RemoteSoundPlayRequest, WWOEvents } from '@WindWakerOnline/WWOAPI/WWOAPI';
 import { WWO_PuppetPacket, WWO_PuppetWrapperPacket, WWO_ScenePacket, WWO_SceneRequestPacket } from '../WWOPackets';
 import { ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
+import Vector3 from 'modloader64_api/math/Vector3';
 
 export class PuppetOverlord {
   private puppets: Map<string, Puppet> = new Map<string, Puppet>();
@@ -148,7 +149,6 @@ export class PuppetOverlord {
 
     this.puppets.forEach((puppet: Puppet, key: string, map: Map<string, Puppet>) => {
       let scene = this.core.global.current_scene_name;
-
       if (scene === this.fakeClientPuppet.scene) {
         if (!puppet.isSpawned && this.awaiting_spawn.indexOf(puppet) === -1) {
           this.awaiting_spawn.push(puppet);
@@ -160,18 +160,27 @@ export class PuppetOverlord {
         console.log("shoveling puppet");
         puppet.shovel();
       }
-
     });
-
     if (check) this.amIAlone = false;
     else this.amIAlone = true;
   }
 
   sendPuppetPacket() {
     if (!this.amIAlone) {
-      let packet = new WWO_PuppetPacket(this.fakeClientPuppet.data, this.ModLoader.clientLobby);
-      this.ModLoader.clientSide.sendPacket(new WWO_PuppetWrapperPacket(packet, this.ModLoader.clientLobby));
+      this.puppets.forEach((puppet: Puppet, key: string, map: Map<string, Puppet>) => {
+        let scene = this.core.global.current_scene_name;
+        if (scene === this.fakeClientPuppet.scene) {
+          puppet.fakeData.matrixUpdateRate = this.clientStorage.scaledDistances.get(puppet.id)!;
+          let packet = new WWO_PuppetPacket(puppet.fakeData, this.ModLoader.clientLobby);
+          let _packet = new WWO_PuppetWrapperPacket(packet, this.ModLoader.clientLobby);
+          this.ModLoader.clientSide.sendPacketToSpecificPlayer(_packet, puppet.player);
+        }
+      });
     }
+  }
+
+  private Vec3FromBuffer(b: Buffer) {
+    return new Vector3(b.readFloatBE(0), b.readFloatBE(4), b.readFloatBE(8));
   }
 
   processPuppetPacket(packet: WWO_PuppetWrapperPacket) {
@@ -181,6 +190,11 @@ export class PuppetOverlord {
 
       let e = new RemoteSoundPlayRequest(packet.player, actualPacket.data, 0);
       bus.emit(WWOEvents.ON_REMOTE_PLAY_SOUND, e);
+      let their_pos: Vector3 = this.Vec3FromBuffer(actualPacket.data.pos);
+      let my_pos: Vector3 = this.Vec3FromBuffer(this.fakeClientPuppet.data.pos);
+      let dist: number = Math.floor((Math.sqrt(Math.abs(((my_pos.x - their_pos.x) ^ 2) + ((my_pos.y - their_pos.y) ^ 2) + ((my_pos.z - their_pos.z) ^ 2))) / 10));
+      console.log(dist);
+      this.clientStorage.scaledDistances.set(puppet.id, dist);
       puppet.processIncomingPuppetData(actualPacket.data, e);
     }
   }
@@ -214,7 +228,6 @@ export class PuppetOverlord {
     ) {
       return;
     }
-
     this.processNewPlayers();
     this.processAwaitingSpawns();
     this.lookForMissingOrStrandedPuppets();

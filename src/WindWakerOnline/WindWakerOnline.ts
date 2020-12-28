@@ -33,9 +33,11 @@ class WindWakerOnline implements IPlugin, IWWOnlineHelpers, IPluginServerConfig 
     // Storage
     LobbyConfig: IWWOnlineLobbyConfig = {} as IWWOnlineLobbyConfig;
     clientStorage: WWOnlineStorageClient = new WWOnlineStorageClient();
-    
+
     sendPacketToPlayersInScene(packet: IPacketHeader): void {
-        if (this.server !== undefined) {
+        if (this.ModLoader.isClient) {
+            this.client.sendPacketToPlayersInScene(packet);
+        } else {
             this.server.sendPacketToPlayersInScene(packet);
         }
     }

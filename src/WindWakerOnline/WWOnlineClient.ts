@@ -37,19 +37,12 @@ export class WWOnlineClient {
 
     sendPacketToPlayersInScene(packet: IPacketHeader) {
         try {
-            let storage: WWOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
-                packet.lobby,
-                this
-            ) as WWOnlineStorage;
-            if (storage === null) {
-                return;
-            }
-            Object.keys(storage.players).forEach((key: string) => {
+            Object.keys(this.clientStorage.players).forEach((key: string) => {
                 //if (storage.players[key] === storage.players[packet.player.uuid]) {
-                if (storage.networkPlayerInstances[key].uuid !== packet.player.uuid) {
+                if (this.clientStorage.networkPlayerInstances[key].uuid !== packet.player.uuid) {
                     this.ModLoader.serverSide.sendPacketToSpecificPlayer(
                         packet,
-                        storage.networkPlayerInstances[key]
+                        this.clientStorage.networkPlayerInstances[key]
                     );
                 }
                 //}
@@ -57,10 +50,22 @@ export class WWOnlineClient {
         } catch (err) { }
     }
 
+    @EventHandler(EventsClient.ON_PLAYER_JOIN)
+    onPlayerJoined(player: INetworkPlayer) {
+        this.clientStorage.players[player.uuid] = "-1";
+        this.clientStorage.networkPlayerInstances[player.uuid] = player;
+    }
+
+    @EventHandler(EventsClient.ON_PLAYER_LEAVE)
+    onPlayerLeave(player: INetworkPlayer) {
+        delete this.clientStorage.players[player.uuid];
+        delete this.clientStorage.networkPlayerInstances[player.uuid];
+    }
+
     @Preinit()
     preinit() {
         this.config = this.ModLoader.config.registerConfigCategory("WWOnline") as WWOnlineConfigCategory;
-        if (this.puppets !== undefined){
+        if (this.puppets !== undefined) {
             this.puppets.clientStorage = this.clientStorage;
         }
     }
@@ -209,14 +214,13 @@ export class WWOnlineClient {
 
     @NetworkHandler('WWO_ScenePacket')
     onSceneChange_client(packet: WWO_ScenePacket) {
-
         this.ModLoader.logger.info(
             'client receive: Player ' +
             packet.player.nickname +
             ' moved to scene: ' + this.core.global.current_scene_name +
             '.'
         );
-
+        this.clientStorage.players[packet.player.uuid] = packet.scene;
     }
 
     // This packet is basically 'where the hell are you?' if a player has a puppet on file but doesn't know what scene its suppose to be in.
@@ -493,7 +497,7 @@ export class WWOnlineClient {
                         this.clientStorage.needs_update = true;
                         this.counter = 0;
                     }
-                    if(!this.core.helper.isLinkControllable()) this.clientStorage.needs_update = true;
+                    if (!this.core.helper.isLinkControllable()) this.clientStorage.needs_update = true;
                     if (this.core.helper.isLinkControllable() && this.clientStorage.needs_update && this.LobbyConfig.data_syncing) {
                         this.updateInventory();
                         this.updateFlags();
@@ -501,10 +505,10 @@ export class WWOnlineClient {
                     }
                 }
             }
-            if (this.LobbyConfig.data_syncing && this.core.helper.isPaused()){
+            if (this.LobbyConfig.data_syncing && this.core.helper.isPaused()) {
                 if (!this.clientStorage.first_time_sync) {
                     return;
-                } 
+                }
                 this.clientStorage.needs_update = true;
             }
             this.counter += 1;
@@ -512,7 +516,7 @@ export class WWOnlineClient {
     }
 
     @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
-    onRomPatched(evt: any){
+    onRomPatched(evt: any) {
         let iso: Buffer = evt.rom;
         iso.writeUInt16BE(0x0400, 0x444);
     }
