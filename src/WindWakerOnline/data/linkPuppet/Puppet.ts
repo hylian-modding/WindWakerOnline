@@ -26,7 +26,6 @@ export class Puppet {
   tunic_color!: number;
   spawnHandle: any = undefined;
   tossedPackets: number = -1;
-  fakeData: PuppetData;
 
   constructor(
     player: INetworkPlayer,
@@ -38,7 +37,6 @@ export class Puppet {
   ) {
     this.player = player;
     this.data = new PuppetData(pointer, ModLoader, core, parent.getClientStorage()!);
-    this.fakeData = new PuppetData(pointer, ModLoader, core, parent.getClientStorage()!);
     this.scene = "sea_T";
     this.ModLoader = ModLoader;
     this.core = core;

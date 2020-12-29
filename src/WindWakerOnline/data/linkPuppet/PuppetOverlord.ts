@@ -166,16 +166,16 @@ export class PuppetOverlord {
   }
 
   sendPuppetPacket() {
-    if (!this.amIAlone) {
-      this.puppets.forEach((puppet: Puppet, key: string, map: Map<string, Puppet>) => {
-        let scene = this.core.global.current_scene_name;
-        if (scene === this.fakeClientPuppet.scene) {
-          puppet.fakeData.matrixUpdateRate = this.clientStorage.scaledDistances.get(puppet.id)!;
-          let packet = new WWO_PuppetPacket(puppet.fakeData, this.ModLoader.clientLobby);
-          let _packet = new WWO_PuppetWrapperPacket(packet, this.ModLoader.clientLobby);
-          this.ModLoader.clientSide.sendPacketToSpecificPlayer(_packet, puppet.player);
-        }
-      });
+    let distances: number[] = [];
+    this.clientStorage.scaledDistances.forEach((value: number)=>{
+      distances.push(value);
+    });
+    distances = distances.sort();
+    if (!this.amIAlone && this.core.helper.isLinkControllable()) {
+      this.fakeClientPuppet.data.matrixUpdateRate = distances[0];
+      let packet = new WWO_PuppetPacket(this.fakeClientPuppet.data, this.ModLoader.clientLobby);
+      let _packet = new WWO_PuppetWrapperPacket(packet, this.ModLoader.clientLobby);
+      this.ModLoader.clientSide.sendPacket(_packet);
     }
   }
 
