@@ -1,18 +1,10 @@
 .open "sys/main.dol"
 .org 0x81800000
 
-; Checks if the player is holding down Y, Z and D-Pad Down.
-
 .global check_run_custom_code
-check_run_custom_code:
+.global check_scene_change
 
-;lis r3, mPadButton__10JUTGamePad@ha ; Bitfield of currently pressed buttons
-;addi r3, r3, mPadButton__10JUTGamePad@l
-;lwz r0, 0 (r3)
-;li r3, 0x0814 ; Custom button combo. Y, Z, and D-pad down.
-;and r0, r0, r3 ; AND to get which buttons in the combo are currently being pressed
-;cmpw r0, r3 ; Check to make sure all of the buttons in the combo are pressed
-;bne do_not_run_custom_code
+check_run_custom_code:
 
 ; Execute custom code here:
 
@@ -39,12 +31,25 @@ bctrl
 ; ... until here!
 
 do_not_run_custom_code:
-sth r22,0(r21)
+sth r22,0(r21) ; Set 81801000 = 0
 lha r0, 8 (r27) ; Replace a line of code we overwrote to jump here
 ; Return to normal code
 lis r3, 0x80234BFC@ha
 addi r3, r3, 0x80234BFC@l
 mtctr r3
+bctrl
+
+check_scene_change:
+lis r18,33152
+addi r18,r18,4100
+li r19,0x1
+stb r19, 0(r18)
+; Line of replaced code
+addi r11,r1,0x18
+; Return to normal code
+lis r15, 0x80053878@ha
+addi r15, r15, 0x80053878@l
+mtctr r15
 bctrl
 
 .close
