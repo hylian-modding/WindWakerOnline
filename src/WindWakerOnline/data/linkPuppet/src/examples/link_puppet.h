@@ -1,27 +1,25 @@
 
 typedef struct NPC_Test_class
 {
-	fopNpc_npc_c parent;
-	MTX34 *transform_space;
-	dNpc_EventCut_c eventActor;
+    fopNpc_npc_c parent;
+    MTX34 *transform_space;
+    dNpc_EventCut_c eventActor;
 
-	request_of_phase_process_class mPhaseRequest;
-	dNpc_PathRun_c mPathRun;
+    request_of_phase_process_class mPhaseRequest;
+    dNpc_PathRun_c mPathRun;
 
-	int mCurrActionIndex;
-	s8 mCurrCutIdx;
+    int mCurrActionIndex;
+    s8 mCurrCutIdx;
 
-	short mMaxFollowRotVel;
-	s8 mHeadJntIdx;
-	s8 mSpineJntIdx;
+    short mMaxFollowRotVel;
+    s8 mHeadJntIdx;
+    s8 mSpineJntIdx;
 
-    s8 drawPreventTimer;
+    u32 packet[4];
 
-	u32 packet[4];
-
-	J3DShape *zoff_blend[4];
-	J3DShape *zoff_none[4];
-	J3DShape *zon[4];
+    J3DShape *zoff_blend[4];
+    J3DShape *zoff_none[4];
+    J3DShape *zon[4];
 } NPC_Test_class;
 
 /** REL LINK FUNCTIONS **/
@@ -139,22 +137,22 @@ const char *daNPCTest__Cut_Names[daNPCTest__Num_Cuts] = {
 
 struct JntCtrl_Params
 {
-  short mMaxHeadRot;
-  short mMinHeadRot;
-  short mMaxSpineRot;
-  short mMinSpineRot;
+    short mMaxHeadRot;
+    short mMinHeadRot;
+    short mMaxSpineRot;
+    short mMinSpineRot;
 
-  short unk_0x00;
-  short unk_0x04;
-  short unk_0x08;
-  short unk_0x0C;
-  short unk_0x10;
+    short unk_0x00;
+    short unk_0x04;
+    short unk_0x08;
+    short unk_0x0C;
+    short unk_0x10;
 
-  short mDesiredFollowRotVel;
+    short mDesiredFollowRotVel;
 
-  float mAttArrowYOffset;
+    float mAttArrowYOffset;
 
-  bool headOnlyFollow;
+    bool headOnlyFollow;
 };
 const struct JntCtrl_Params daNPCTest__JntCtrl_Params = {
     .mMaxHeadRot = 0x2000,

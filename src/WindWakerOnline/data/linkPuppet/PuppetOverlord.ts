@@ -193,7 +193,7 @@ export class PuppetOverlord {
       let their_pos: Vector3 = this.Vec3FromBuffer(actualPacket.data.pos);
       let my_pos: Vector3 = this.Vec3FromBuffer(this.fakeClientPuppet.data.pos);
       let dist: number = Math.floor((Math.sqrt(Math.abs(((my_pos.x - their_pos.x) ^ 2) + ((my_pos.y - their_pos.y) ^ 2) + ((my_pos.z - their_pos.z) ^ 2))) / 10));
-      console.log(dist);
+      //console.log(dist);
       this.clientStorage.scaledDistances.set(puppet.id, dist);
       puppet.processIncomingPuppetData(actualPacket.data, e);
     }
@@ -257,7 +257,7 @@ export class PuppetOverlord {
 
   @NetworkHandler('WWO_ScenePacket')
   onSceneChange_client(packet: WWO_ScenePacket) {
-    console.log(packet);
+    //console.log(packet);
     this.changePuppetScene(packet.player, packet.scene);
   }
 
