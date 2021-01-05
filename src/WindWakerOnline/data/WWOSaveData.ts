@@ -251,6 +251,7 @@ export class QuestSave implements API.IQuestStatus {
   shieldLevel!: Buffer;
   pirate_charm!: Buffer;
   hero_charm!: Buffer;
+  piece_of_heart!: number;
   songs!: Buffer;
   pearls!: Buffer;
   triforce!: Buffer;
@@ -269,6 +270,7 @@ export function createQuestFromContext(save: API.IQuestStatus): QuestSave {
   data.bracelet = save.bracelet;
   data.pirate_charm = save.pirate_charm;
   data.hero_charm = save.hero_charm;
+  data.piece_of_heart = save.piece_of_heart;
   data.owned_charts = save.owned_charts;
   data.opened_charts = save.opened_charts;
   data.completed_charts = save.completed_charts;
@@ -288,8 +290,7 @@ export function mergeQuestData(
   save: QuestSave,
   incoming: QuestSave,
 ) {
-  if(incoming.hasTunic > save.hasTunic)
-  {
+  if (incoming.hasTunic > save.hasTunic) {
     save.hasTunic = incoming.hasTunic;
   }
   if (incoming.pearls !== save.pearls) {
@@ -303,6 +304,9 @@ export function mergeQuestData(
   }
   if (incoming.hero_charm !== save.hero_charm) {
     save.hero_charm = incoming.hero_charm;
+  }
+  if (incoming.piece_of_heart > save.piece_of_heart) {
+    save.piece_of_heart = incoming.piece_of_heart;
   }
   if (incoming.owned_charts !== save.owned_charts) {
     save.owned_charts = incoming.owned_charts;
@@ -355,6 +359,7 @@ export function applyQuestSaveToContext(data: QuestSave, save: API.ISaveContext)
   save.questStatus.bracelet = data.bracelet;
   save.questStatus.pirate_charm = data.pirate_charm;
   save.questStatus.hero_charm = data.hero_charm;
+  save.questStatus.piece_of_heart = data.piece_of_heart;
   save.questStatus.owned_charts = data.owned_charts;
   save.questStatus.opened_charts = data.opened_charts;
   save.questStatus.completed_charts = data.completed_charts;
