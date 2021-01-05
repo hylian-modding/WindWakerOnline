@@ -20,6 +20,6 @@
   },
   "homepage": "https://github.com/hylian-modding/WindWakerOnline#readme",
   "modloader64_deps": {
-    "WindWaker": "https://github.com/MelonSpeedruns/Core-WindWaker.git"
+    "WindWaker": "https://github.com/hylian-modding/Core-WindWaker.git"
   }
 }
