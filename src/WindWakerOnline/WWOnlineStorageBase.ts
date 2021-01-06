@@ -6,15 +6,17 @@ import {
 } from './data/WWOSaveData';
 
 export class WWOnlineStorageBase {
-  constructor() {}
+  constructor() { }
   players: any = {};
   networkPlayerInstances: any = {};
   inventoryStorage: InventoryStorageBase = new InventoryStorageBase();
   questStorage: QuestStorageBase = new QuestStorageBase();
 }
-export class QuestStorageBase implements IQuestStatus{
-  constructor() {}
+export class QuestStorageBase implements IQuestStatus {
+  constructor() { }
   hasTunic: boolean = false;
+  heart_pieces: number = 0xC;
+  heart_containers: number = 0xC;
   swordEquip: number = 0xFF;
   shieldEquip: number = 0xFF;
   braceletEquip: number = 0xFF;
@@ -33,8 +35,8 @@ export class QuestStorageBase implements IQuestStatus{
   deciphered_triforce: Buffer = Buffer.alloc(0x1);
 }
 
-export class InventoryStorageBase implements IInventoryFields{
-  constructor() {}
+export class InventoryStorageBase implements IInventoryFields {
+  constructor() { }
   FIELD_TELESCOPE: boolean = false;
   FIELD_SAIL: boolean = false;
   FIELD_WIND_WAKER: boolean = false;
