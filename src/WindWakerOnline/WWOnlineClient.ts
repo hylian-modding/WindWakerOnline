@@ -34,6 +34,7 @@ export class WWOnlineClient {
     clientStorage!: WWOnlineStorageClient;
     config!: WWOnlineConfigCategory;
     counter = 0;
+    lastMagicValue: number = 0xFF;
 
     sendPacketToPlayersInScene(packet: IPacketHeader) {
         try {
@@ -286,16 +287,25 @@ export class WWOnlineClient {
 
     healPlayer() {
         if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNameValid()) return;
-        this.core.save.current_hp = 0x50;
+        this.core.ModLoader.emulator.rdramWriteF32(0x803CA764, 0x50);
+    }
+
+    refreshMagic() {
+        if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNameValid()) return;
+
+        this.lastMagicValue = this.core.save.current_mp;
+
+        if (this.core.save.current_mp === 0x20 || this.core.save.current_mp === 0x10) {
+            this.core.save.current_mp -= 1;
+        }
+        else {
+            this.core.save.current_mp += 1;
+        }
     }
 
     @EventHandler(WWOEvents.GAINED_PIECE_OF_HEART)
-    onNeedsHeal1(evt: any) {
-        this.healPlayer();
-    }
-
-    @EventHandler(WWOEvents.GAINED_HEART_CONTAINER)
-    onNeedsHeal2(evt: any) {
+    onNeedsHeal(evt: any) {
+        this.refreshMagic();
         this.healPlayer();
     }
 
@@ -505,6 +515,12 @@ export class WWOnlineClient {
                     }
                 }
             }
+
+            if (this.lastMagicValue != 0xFF) {
+                this.core.save.current_mp = this.lastMagicValue;
+                this.lastMagicValue = 0xFF;
+            }
+
             if (this.LobbyConfig.data_syncing && this.core.helper.isPaused()) {
                 if (!this.clientStorage.first_time_sync) {
                     return;
