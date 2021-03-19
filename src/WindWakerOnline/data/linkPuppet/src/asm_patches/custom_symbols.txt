@@ -1,3 +1,3 @@
 sys/main.dol:
-  check_run_custom_code: 0x81800000
-  check_scene_change: 0x81800060
+  check_command_start: 0x81800000
+  check_scene_change: 0x818000E4

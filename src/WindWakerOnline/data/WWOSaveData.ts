@@ -45,6 +45,8 @@ export class InventorySave implements API.IInventoryFields {
   bombCap!: number;
   arrowCap!: number;
   rupeeCount!: number;
+  max_hp!: number;
+  max_mp!: number;
 }
 
 export function createInventoryFromContext(save: API.ISaveContext): InventorySave {
@@ -86,6 +88,8 @@ export function createInventoryFromContext(save: API.ISaveContext): InventorySav
   data.bombCap = save.inventory.bombCap;
   data.arrowCap = save.inventory.arrowCap;
   data.rupeeCount = save.inventory.rupeeCount;
+  data.max_hp = save.max_hp;
+  data.max_mp = save.max_mp;
 
   return data;
 }
@@ -196,6 +200,14 @@ export function mergeInventoryData(
   if (incoming.rupeeCount !== save.rupeeCount) {
     save.rupeeCount = incoming.rupeeCount;
   }
+  if (incoming.max_hp > save.max_hp)
+  {
+    save.max_hp = incoming.max_hp;
+  }
+  if (incoming.max_mp > save.max_mp)
+  {
+    save.max_mp = incoming.max_mp;
+  }
 }
 
 export function applyInventoryToContext(
@@ -239,6 +251,8 @@ export function applyInventoryToContext(
   save.inventory.bombCap = data.bombCap;
   save.inventory.arrowCap = data.arrowCap;
   save.inventory.rupeeCount = data.rupeeCount;
+  save.max_hp = data.max_hp;
+  save.max_mp = data.max_mp;
 }
 
 export class QuestSave implements API.IQuestStatus {
@@ -251,7 +265,6 @@ export class QuestSave implements API.IQuestStatus {
   shieldLevel!: Buffer;
   pirate_charm!: Buffer;
   hero_charm!: Buffer;
-  heart_pieces!: number;
   songs!: Buffer;
   pearls!: Buffer;
   triforce!: Buffer;
@@ -270,7 +283,6 @@ export function createQuestFromContext(save: API.IQuestStatus): QuestSave {
   data.bracelet = save.bracelet;
   data.pirate_charm = save.pirate_charm;
   data.hero_charm = save.hero_charm;
-  data.heart_pieces = save.heart_pieces;
   data.owned_charts = save.owned_charts;
   data.opened_charts = save.opened_charts;
   data.completed_charts = save.completed_charts;
@@ -304,9 +316,6 @@ export function mergeQuestData(
   }
   if (incoming.hero_charm !== save.hero_charm) {
     save.hero_charm = incoming.hero_charm;
-  }
-  if (incoming.heart_pieces > save.heart_pieces) {
-    save.heart_pieces = incoming.heart_pieces;
   }
   if (incoming.owned_charts !== save.owned_charts) {
     save.owned_charts = incoming.owned_charts;
@@ -359,13 +368,6 @@ export function applyQuestSaveToContext(data: QuestSave, save: API.ISaveContext)
   save.questStatus.bracelet = data.bracelet;
   save.questStatus.pirate_charm = data.pirate_charm;
   save.questStatus.hero_charm = data.hero_charm;
-
-  let lastKnownHP: number = save.questStatus.heart_pieces;
-  save.questStatus.heart_pieces = data.heart_pieces;
-  if (lastKnownHP < data.heart_pieces) {
-    bus.emit(WWOEvents.GAINED_PIECE_OF_HEART, data.heart_pieces);
-  }
-
   save.questStatus.owned_charts = data.owned_charts;
   save.questStatus.opened_charts = data.opened_charts;
   save.questStatus.completed_charts = data.completed_charts;

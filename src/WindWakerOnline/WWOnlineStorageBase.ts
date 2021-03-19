@@ -71,4 +71,6 @@ export class InventoryStorageBase implements IInventoryFields {
   bombCap: number = 0;
   arrowCap: number = 0;
   rupeeCount: number = 0;
+  max_hp: number = 0;
+  max_mp: number = 0;
 }
