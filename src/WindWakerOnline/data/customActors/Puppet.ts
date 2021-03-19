@@ -26,6 +26,7 @@ export class Puppet {
   tunic_color!: number;
   spawnHandle: any = undefined;
   tossedPackets: number = -1;
+  puppetArray: Buffer = Buffer.alloc(0x58);
 
   constructor(
     player: INetworkPlayer,
@@ -56,30 +57,18 @@ export class Puppet {
   doNotDespawnMe(p: number) {
   }
 
-  prevLastEntityPtr: number = 0x0;
-
-  isLastEntityPuppet(): boolean {
-    let entityPtr = this.ModLoader.emulator.rdramRead32(0x8037202C);
-
-    entityPtr -= 0xC4;
-
-    if (this.prevLastEntityPtr == entityPtr) {
-      return false;
-    }
-
-    let entityID = this.ModLoader.emulator.rdramRead16(entityPtr + 0x08);
-    this.prevLastEntityPtr = entityPtr;
-
-    return entityID === 0x00B5;
-  }
-
   getLastEntityPtr() {
     let entityPtr = this.ModLoader.emulator.rdramRead32(0x8037202C);
     entityPtr -= 0xC4;
     return entityPtr;
   }
 
-  spawn() {
+  @EventHandler(WWEvents.ON_SCENE_CHANGE)
+  spawnUtility() {
+    this.ModLoader.emulator.rdramWrite16(0x81801000, 0x004C); //Utility Actor used to handle all in-game needs
+  }
+
+  spawnPuppet() {
     if (this.isShoveled) {
       this.isShoveled = false;
       this.ModLoader.logger.debug('Puppet resurrected.');
@@ -90,13 +79,16 @@ export class Puppet {
 
       this.isSpawning = true;
       this.data.pointer = 0x0;
-      this.ModLoader.emulator.rdramWrite16(0x81801000, 0x00B5);
+      this.ModLoader.emulator.rdramWrite32(0x81801004, 0x01); //Utility Actor: Spawn Puppet
       let currentScene = this.core.global.current_scene_name;
 
       this.spawnHandle = this.ModLoader.utils.setIntervalFrames(() => {
-        if (this.isLastEntityPuppet() && currentScene === this.core.global.current_scene_name) {
-          this.data.pointer = this.getLastEntityPtr();
+        if (currentScene === this.core.global.current_scene_name) {
+          this.data.pointer = this.ModLoader.emulator.rdramRead32(0x81801008); //Immediate Puppet Pointer
           console.log("this.data.pointer: " + this.data.pointer.toString(16));
+
+          let nextIndex = this.puppetArray.indexOf(0x00000000, 0);
+          this.puppetArray[nextIndex] = this.data.pointer; //Set the puppet pointer into the next available index of `puppetArray: Buffer = Buffer.alloc(0x58);`
 
           this.doNotDespawnMe(this.data.pointer);
 
@@ -107,6 +99,9 @@ export class Puppet {
 
           this.isSpawned = true;
           this.isSpawning = false;
+          
+          this.ModLoader.emulator.rdramWrite32(0x81801004, 0);
+          this.ModLoader.emulator.rdramWrite32(0x81801008, 0);
           bus.emit(WWOEvents.PLAYER_PUPPET_SPAWNED, this);
         }
       }, 100);
@@ -142,6 +137,8 @@ export class Puppet {
 
   despawn() {
     if (this.isSpawned) {
+      this.ModLoader.emulator.rdramWrite32(0x81801004,3); //Utility Actor: Despawn Individual Puppet
+      this.ModLoader.emulator.rdramWrite32(0x8180100C,this.data.pointer); //Utility Actor: Despawn Individual Puppet
       if (this.data.pointer > 0) {
         this.data.pointer = 0;
       }
@@ -150,5 +147,12 @@ export class Puppet {
       this.ModLoader.logger.debug('Puppet ' + this.id + ' despawned.');
       bus.emit(WWOEvents.PLAYER_PUPPET_DESPAWNED, this);
     }
+  }
+  
+  @EventHandler(WWEvents.ON_LOADING_ZONE)
+  despawn2(){
+    this.ModLoader.emulator.rdramWrite32(0x81801004,2); //Utility Actor: Despawn All Puppet
+    this.ModLoader.emulator.rdramWrite32(0x81801004,4); //Utility Actor: Despawn Utility Actor
+    bus.emit(WWOEvents.PLAYER_PUPPET_DESPAWNED, this);
   }
 }

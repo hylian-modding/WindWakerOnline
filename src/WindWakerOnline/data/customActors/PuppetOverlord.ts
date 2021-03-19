@@ -140,7 +140,7 @@ export class PuppetOverlord {
   processAwaitingSpawns() {
     if (this.awaiting_spawn.length > 0 && !this.queuedSpawn) {
       let puppet: Puppet = this.awaiting_spawn.shift() as Puppet;
-      if (puppet.scene == this.core.global.current_scene_name && this.core.helper.isLinkExists() && this.core.helper.isLinkControllable()) puppet.spawn();
+      if (puppet.scene == this.core.global.current_scene_name && this.core.helper.isLinkExists() && this.core.helper.isLinkControllable()) puppet.spawnPuppet();
     }
   }
 

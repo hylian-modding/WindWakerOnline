@@ -17,7 +17,8 @@ import { SidedProxy, ProxySide } from 'modloader64_api/SidedProxy/SidedProxy';
 import { WWOnlineStorage } from './WWOnlineStorage';
 import { WWOEvents } from './WWOAPI/WWOAPI';
 import { parseFlagChanges } from './parseFlagChanges';
-import { PuppetOverlord } from './data/linkPuppet/PuppetOverlord';
+import { PuppetOverlord } from './data/customActors/PuppetOverlord';
+import { WWEvents } from 'WindWaker/API/Imports';
 
 
 export class WWOnlineClient {

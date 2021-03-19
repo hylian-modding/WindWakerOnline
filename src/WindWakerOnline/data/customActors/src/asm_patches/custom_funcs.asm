@@ -16,8 +16,8 @@ beq do_not_run_custom_code
 
 li r4,0
 li r5,0
-lis r6,32831
-addi r6,r6,27256
+lis r6,32770
+addi r6,r6,17940
 lbz r6,0(r6)
 li r7,0
 li r8,0
