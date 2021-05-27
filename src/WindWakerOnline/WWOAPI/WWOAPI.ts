@@ -59,4 +59,16 @@ export class RemoteSoundPlayRequest {
     this.puppet = puppet;
     this.sound_id = sound_id;
   }
+
+}
+
+export const enum Command{
+  COMMAND_TYPE_NONE,
+  COMMAND_TYPE_PUPPET_SPAWN,
+  COMMAND_TYPE_PUPPET_DESPAWN,
+  COMMAND_TYPE_COUNT
+}
+
+export interface ICommandBuffer {
+  runCommand(command: Command, data: Buffer, uuid?: number): number;
 }

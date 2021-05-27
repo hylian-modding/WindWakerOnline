@@ -15,7 +15,10 @@ export class WWOnlineStorageBase {
 export class QuestStorageBase implements IQuestStatus {
   constructor() { }
   hasTunic: boolean = false;
-  heart_pieces: number = 0xC;
+  current_hp: number = 0;
+  current_mp: number = 0;
+  max_hp: number = 0;
+  max_mp: number = 0;
   heart_containers: number = 0xC;
   swordEquip: number = 0xFF;
   shieldEquip: number = 0xFF;

@@ -1,6 +1,5 @@
 import { PuppetData } from './PuppetData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
-import { Command } from 'modloader64_api/OOT/ICommandBuffer';
 import { bus, EventHandler } from 'modloader64_api/EventHandler';
 import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
 import Vector3 from 'modloader64_api/math/Vector3';
@@ -9,12 +8,14 @@ import path from 'path';
 
 import { IWWCore, WWEvents } from 'WindWaker/API/WWAPI';
 import WWOnline from '../../WindWakerOnline';
-import { IWWOnlineHelpers, RemoteSoundPlayRequest, WWOEvents } from '../../WWOAPI/WWOAPI';
+import { Command, ICommandBuffer, IWWOnlineHelpers, RemoteSoundPlayRequest, WWOEvents } from '../../WWOAPI/WWOAPI';
 
 export class Puppet {
   player: INetworkPlayer;
   id: string;
   data: PuppetData;
+  commandBuffer!: ICommandBuffer;
+  spawnIndex = 0;
   isSpawned = false;
   isSpawning = false;
   isShoveled = false;
@@ -58,27 +59,6 @@ export class Puppet {
 
   prevLastEntityPtr: number = 0x0;
 
-  isLastEntityPuppet(): boolean {
-    let entityPtr = this.ModLoader.emulator.rdramRead32(0x8037202C);
-
-    entityPtr -= 0xC4;
-
-    if (this.prevLastEntityPtr == entityPtr) {
-      return false;
-    }
-
-    let entityID = this.ModLoader.emulator.rdramRead16(entityPtr + 0x08);
-    this.prevLastEntityPtr = entityPtr;
-
-    return entityID === 0x00B5;
-  }
-
-  getLastEntityPtr() {
-    let entityPtr = this.ModLoader.emulator.rdramRead32(0x8037202C);
-    entityPtr -= 0xC4;
-    return entityPtr;
-  }
-
   spawn() {
     if (this.isShoveled) {
       this.isShoveled = false;
@@ -90,13 +70,14 @@ export class Puppet {
 
       this.isSpawning = true;
       this.data.pointer = 0x0;
-      this.ModLoader.emulator.rdramWrite16(0x81801000, 0x00B5);
       let currentScene = this.core.global.current_scene_name;
 
+      this.spawnIndex + 1;
+      this.data.pointer = this.commandBuffer.runCommand(Command.COMMAND_TYPE_PUPPET_SPAWN, Buffer.alloc(0), this.spawnIndex)
       this.spawnHandle = this.ModLoader.utils.setIntervalFrames(() => {
-        if (this.isLastEntityPuppet() && currentScene === this.core.global.current_scene_name) {
-          this.data.pointer = this.getLastEntityPtr();
-          console.log("this.data.pointer: " + this.data.pointer.toString(16));
+
+        if (currentScene === this.core.global.current_scene_name) {
+          console.log("this.data.pointer: 0x" + this.data.pointer.toString(16));
 
           this.doNotDespawnMe(this.data.pointer);
 
@@ -143,6 +124,9 @@ export class Puppet {
   despawn() {
     if (this.isSpawned) {
       if (this.data.pointer > 0) {
+        let pointer = Buffer.alloc(8);
+        pointer.writeUInt32BE(this.data.pointer, 4);
+        this.commandBuffer.runCommand(Command.COMMAND_TYPE_PUPPET_SPAWN, pointer, this.spawnIndex)
         this.data.pointer = 0;
       }
       this.isSpawned = false;

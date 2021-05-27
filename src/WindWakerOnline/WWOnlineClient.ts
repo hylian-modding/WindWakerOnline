@@ -287,19 +287,19 @@ export class WWOnlineClient {
 
     healPlayer() {
         if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNameValid()) return;
-        this.core.ModLoader.emulator.rdramWriteF32(0x803CA764, 0x50);
+        this.core.ModLoader.emulator.rdramWriteF32(0x803CA764, 80);
     }
 
     refreshMagic() {
         if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNameValid()) return;
 
-        this.lastMagicValue = this.core.save.current_mp;
+        this.lastMagicValue = this.core.save.questStatus.current_mp;
 
-        if (this.core.save.current_mp === 0x20 || this.core.save.current_mp === 0x10) {
-            this.core.save.current_mp -= 1;
+        if (this.core.save.questStatus.current_mp === 0x20 || this.core.save.questStatus.current_mp === 0x10) {
+            this.core.save.questStatus.current_mp -= 1;
         }
         else {
-            this.core.save.current_mp += 1;
+            this.core.save.questStatus.current_mp += 1;
         }
     }
 
@@ -313,13 +313,13 @@ export class WWOnlineClient {
     onNeedsMagic(size: API.Magic) {
         switch (size) {
             case API.Magic.NONE:
-                this.core.save.current_mp = API.MagicQuantities.NONE;
+                this.core.save.questStatus.current_mp = API.MagicQuantities.NONE;
                 break;
             case API.Magic.NORMAL:
-                this.core.save.current_mp = API.MagicQuantities.NORMAL;
+                this.core.save.questStatus.current_mp = API.MagicQuantities.NORMAL;
                 break;
             case API.Magic.EXTENDED:
-                this.core.save.current_mp = API.MagicQuantities.EXTENDED;
+                this.core.save.questStatus.current_mp = API.MagicQuantities.EXTENDED;
                 break;
         }
     }
@@ -517,7 +517,7 @@ export class WWOnlineClient {
             }
 
             if (this.lastMagicValue != 0xFF) {
-                this.core.save.current_mp = this.lastMagicValue;
+                this.core.save.questStatus.current_mp = this.lastMagicValue;
                 this.lastMagicValue = 0xFF;
             }
 

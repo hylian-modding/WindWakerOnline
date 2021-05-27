@@ -88,8 +88,6 @@ export function createInventoryFromContext(save: API.ISaveContext): InventorySav
   data.bombCap = save.inventory.bombCap;
   data.arrowCap = save.inventory.arrowCap;
   data.rupeeCount = save.inventory.rupeeCount;
-  data.max_hp = save.max_hp;
-  data.max_mp = save.max_mp;
 
   return data;
 }
@@ -251,11 +249,13 @@ export function applyInventoryToContext(
   save.inventory.bombCap = data.bombCap;
   save.inventory.arrowCap = data.arrowCap;
   save.inventory.rupeeCount = data.rupeeCount;
-  save.max_hp = data.max_hp;
-  save.max_mp = data.max_mp;
 }
 
 export class QuestSave implements API.IQuestStatus {
+  current_hp!: number;
+  current_mp!: number;
+  max_hp!: number; 
+  max_mp!: number;
   hasTunic!: boolean;
   swordEquip!: number;
   shieldEquip!: number;
@@ -277,6 +277,8 @@ export class QuestSave implements API.IQuestStatus {
 
 export function createQuestFromContext(save: API.IQuestStatus): QuestSave {
   let data = new QuestSave();
+  data.max_hp = save.max_hp;
+  data.max_mp = save.max_mp;
   data.hasTunic = save.hasTunic;
   data.swordLevel = save.swordLevel;
   data.shieldLevel = save.shieldLevel;
@@ -302,6 +304,12 @@ export function mergeQuestData(
   save: QuestSave,
   incoming: QuestSave,
 ) {
+  if (incoming.max_hp > save.max_hp) {
+    save.max_hp = incoming.max_hp;
+  }
+  if (incoming.max_mp > save.max_mp) {
+    save.max_mp = incoming.max_mp;
+  }
   if (incoming.hasTunic > save.hasTunic) {
     save.hasTunic = incoming.hasTunic;
   }
@@ -368,6 +376,19 @@ export function applyQuestSaveToContext(data: QuestSave, save: API.ISaveContext)
   save.questStatus.bracelet = data.bracelet;
   save.questStatus.pirate_charm = data.pirate_charm;
   save.questStatus.hero_charm = data.hero_charm;
+
+
+  let lastKnownHP: number = save.questStatus.max_hp;
+  save.questStatus.max_hp = data.max_hp;
+  if (lastKnownHP < data.max_hp) {
+    bus.emit(WWOEvents.GAINED_PIECE_OF_HEART, data.max_hp);
+  }
+  let lastKnownMP: number = save.questStatus.max_mp;
+  save.questStatus.max_mp = data.max_mp;
+  if (lastKnownMP < data.max_mp) {
+    bus.emit(WWOEvents.MAGIC_METER_INCREASED, data.max_mp);
+  }
+
   save.questStatus.owned_charts = data.owned_charts;
   save.questStatus.opened_charts = data.opened_charts;
   save.questStatus.completed_charts = data.completed_charts;
