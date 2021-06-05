@@ -20,6 +20,9 @@ typedef struct NPC_Test_class
     J3DShape *zoff_blend[4];
     J3DShape *zoff_none[4];
     J3DShape *zon[4];
+
+    u32 nodeMtx0;
+    u32 nodeMtx1;
 } NPC_Test_class;
 
 /** REL LINK FUNCTIONS **/

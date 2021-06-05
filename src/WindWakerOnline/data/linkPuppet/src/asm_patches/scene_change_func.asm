@@ -1,11 +1,11 @@
 .open "sys/main.dol"
-.org 0x818001E0
+.org 0x81800500
 
 .global check_scene_change
 
 check_scene_change:
-lis r18,33152 ; Address to write scene change check flag
-addi r18,r18,8192
+lis r18,33152 ; Address to write scene change check flag (0x81803000)
+addi r18,r18,12288
 li r19,0x1
 stb r19, 0(r18)
 ; Line of replaced code

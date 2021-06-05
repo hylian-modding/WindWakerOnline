@@ -1,7 +1,7 @@
 {
   "name": "WindWakerOnline",
   "version": "1.0.0",
-  "description": "This is an online mod for [ModLoader64](https://github.com/hylian-modding/ModLoader64).",
+  "description": "Online mod for \"The Wind Waker\"",
   "main": "index.js",
   "dependencies": {},
   "devDependencies": {},
@@ -18,8 +18,5 @@
   "bugs": {
     "url": "https://github.com/hylian-modding/WindWakerOnline/issues"
   },
-  "homepage": "https://github.com/hylian-modding/WindWakerOnline#readme",
-  "modloader64_deps": {
-    "WindWaker": "https://github.com/hylian-modding/Core-WindWaker.git"
-  }
+  "homepage": "https://github.com/hylian-modding/WindWakerOnline#readme"
 }

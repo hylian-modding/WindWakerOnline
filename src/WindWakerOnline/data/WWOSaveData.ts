@@ -44,9 +44,6 @@ export class InventorySave implements API.IInventoryFields {
   rupeeCap!: number;
   bombCap!: number;
   arrowCap!: number;
-  rupeeCount!: number;
-  max_hp!: number;
-  max_mp!: number;
 }
 
 export function createInventoryFromContext(save: API.ISaveContext): InventorySave {
@@ -87,7 +84,6 @@ export function createInventoryFromContext(save: API.ISaveContext): InventorySav
   data.rupeeCap = save.inventory.rupeeCap;
   data.bombCap = save.inventory.bombCap;
   data.arrowCap = save.inventory.arrowCap;
-  data.rupeeCount = save.inventory.rupeeCount;
 
   return data;
 }
@@ -195,17 +191,6 @@ export function mergeInventoryData(
   if (incoming.arrowCap !== save.arrowCap) {
     save.arrowCap = incoming.arrowCap;
   }
-  if (incoming.rupeeCount !== save.rupeeCount) {
-    save.rupeeCount = incoming.rupeeCount;
-  }
-  if (incoming.max_hp > save.max_hp)
-  {
-    save.max_hp = incoming.max_hp;
-  }
-  if (incoming.max_mp > save.max_mp)
-  {
-    save.max_mp = incoming.max_mp;
-  }
 }
 
 export function applyInventoryToContext(
@@ -248,13 +233,12 @@ export function applyInventoryToContext(
   save.inventory.rupeeCap = data.rupeeCap;
   save.inventory.bombCap = data.bombCap;
   save.inventory.arrowCap = data.arrowCap;
-  save.inventory.rupeeCount = data.rupeeCount;
 }
 
 export class QuestSave implements API.IQuestStatus {
   current_hp!: number;
   current_mp!: number;
-  max_hp!: number; 
+  max_hp!: number;
   max_mp!: number;
   hasTunic!: boolean;
   swordEquip!: number;

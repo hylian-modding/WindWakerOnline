@@ -9,13 +9,13 @@ import path from 'path';
 import { IWWCore, WWEvents } from 'WindWaker/API/WWAPI';
 import WWOnline from '../../WindWakerOnline';
 import { Command, ICommandBuffer, IWWOnlineHelpers, RemoteSoundPlayRequest, WWOEvents } from '../../WWOAPI/WWOAPI';
+import { CommandBuffer, instance } from './CommandBuffer';
 
 export class Puppet {
   player: INetworkPlayer;
   id: string;
   data: PuppetData;
-  commandBuffer!: ICommandBuffer;
-  spawnIndex = 0;
+  commandBuffer: ICommandBuffer;
   isSpawned = false;
   isSpawning = false;
   isShoveled = false;
@@ -27,6 +27,7 @@ export class Puppet {
   tunic_color!: number;
   spawnHandle: any = undefined;
   tossedPackets: number = -1;
+  uniqueID: number = -1;
 
   constructor(
     player: INetworkPlayer,
@@ -38,6 +39,7 @@ export class Puppet {
   ) {
     this.player = player;
     this.data = new PuppetData(pointer, ModLoader, core, parent.getClientStorage()!);
+    this.commandBuffer = new CommandBuffer(ModLoader);
     this.scene = "sea_T";
     this.ModLoader = ModLoader;
     this.core = core;
@@ -59,7 +61,7 @@ export class Puppet {
 
   prevLastEntityPtr: number = 0x0;
 
-  spawn() {
+  spawn(spawnIndex: number) {
     if (this.isShoveled) {
       this.isShoveled = false;
       this.ModLoader.logger.debug('Puppet resurrected.');
@@ -69,28 +71,9 @@ export class Puppet {
       bus.emit(WWOEvents.PLAYER_PUPPET_PRESPAWN, this);
 
       this.isSpawning = true;
-      this.data.pointer = 0x0;
-      let currentScene = this.core.global.current_scene_name;
 
-      this.spawnIndex + 1;
-      this.data.pointer = this.commandBuffer.runCommand(Command.COMMAND_TYPE_PUPPET_SPAWN, Buffer.alloc(0), this.spawnIndex)
-      this.spawnHandle = this.ModLoader.utils.setIntervalFrames(() => {
-
-        if (currentScene === this.core.global.current_scene_name) {
-          console.log("this.data.pointer: 0x" + this.data.pointer.toString(16));
-
-          this.doNotDespawnMe(this.data.pointer);
-
-          this.void = this.ModLoader.math.rdramReadV3(this.data.pointer + 0x1F8);
-
-          this.ModLoader.utils.clearIntervalFrames(this.spawnHandle);
-          this.spawnHandle = undefined;
-
-          this.isSpawned = true;
-          this.isSpawning = false;
-          bus.emit(WWOEvents.PLAYER_PUPPET_SPAWNED, this);
-        }
-      }, 100);
+      console.log("Attempting to spawn puppet with spawnIndex unique id " + spawnIndex);
+      this.commandBuffer.runCommand(Command.COMMAND_TYPE_PUPPET_SPAWN, Buffer.alloc(0), spawnIndex)
     }
   }
 
@@ -125,8 +108,8 @@ export class Puppet {
     if (this.isSpawned) {
       if (this.data.pointer > 0) {
         let pointer = Buffer.alloc(8);
-        pointer.writeUInt32BE(this.data.pointer, 4);
-        this.commandBuffer.runCommand(Command.COMMAND_TYPE_PUPPET_SPAWN, pointer, this.spawnIndex)
+        pointer.writeUInt32BE(this.data.pointer, 0);
+        this.commandBuffer.runCommand(Command.COMMAND_TYPE_PUPPET_DESPAWN, pointer, 0)
         this.data.pointer = 0;
       }
       this.isSpawned = false;

@@ -14,6 +14,8 @@
 static void *_ctors SECTION(".ctors");
 static void *_dtors SECTION(".dtors");
 
+#define OFFSETOF(TYPE, ELEMENT) ((unsigned int)&(((TYPE *)0)->ELEMENT))
+
 /** REL LINK FUNCTIONS **/
 void _prolog()
 {
@@ -35,6 +37,14 @@ void _unresolved()
 /** INTERFACE FUNCTIONS **/
 int daNPCTest_Create(NPC_Test_class *this)
 {
+  asm("nop");
+  volatile int fuck = OFFSETOF(NPC_Test_class, nodeMtx0);
+  fuck = OFFSETOF(NPC_Test_class, nodeMtx1);
+  asm("nop");
+
+  this->nodeMtx0 = 0;
+  this->nodeMtx1 = 0;
+
   // Run the constructor if it hasn't already been run.
   if ((this->parent.parent.mMiscFlags & fopAc_ac_c__MiscFlags__Constructed) == 0)
   {
@@ -121,10 +131,17 @@ u32 onoff2[] = {0x80371b84, 0, 0, 0};
 
 int daNPCTest_Draw(NPC_Test_class *this)
 {
-  *(void **)0x81801FFC = &g_dComIfG_gameInfo.mPlay.mpCurPlayerActor->mpCLModel->mpNodeMtx[0];
-  *(void **)0x81802000 = &this->parent.mpMcaMorf->mpModel->mpNodeMtx[0];
 
-  dScnKy_env_light_c__settingTevStruct(&g_env_light, settingTevStruct__LightType__Player, &this->parent.parent.mCurrent.mPos, &this->parent.parent.mTevStr);
+  //*(void **)0x81801FFC = &g_dComIfG_gameInfo.mPlay.mpCurPlayerActor->mpCLModel->mpNodeMtx[0];
+  //*(void **)0x81802000 = &this->parent.mpMcaMorf->mpModel->mpNodeMtx[0];
+
+  //this->nodeMtx0 = &g_dComIfG_gameInfo.mPlay.mpCurPlayerActor->mpCLModel->mpNodeMtx[0];
+  //this->nodeMtx1 = &this->parent.mpMcaMorf->mpModel->mpNodeMtx[0];
+
+  //this->nodeMtx0 = 0xDEADBEEF;
+  //this->nodeMtx1 = 0xDEADBEEF;
+
+      dScnKy_env_light_c__settingTevStruct(&g_env_light, settingTevStruct__LightType__Player, &this->parent.parent.mCurrent.mPos, &this->parent.parent.mTevStr);
   dScnKy_env_light_c__setLightTevColorType(&g_env_light, this->parent.mpMcaMorf->mpModel, &this->parent.parent.mTevStr);
 
   //mDoExt_McaMorf__entryDL(this->parent.mpMcaMorf);
@@ -450,7 +467,7 @@ int daNPCTest_createSolidHeap_CB(NPC_Test_class *this)
   OSReport("zb %d, zn %d, z %d", zoff_blend_cnt, zoff_none_cnt, zon_cnt);
   // Store a reference to ourselves in the model instance so that it knows who it belongs to.
   this->parent.mpMcaMorf->mpModel->mpUserData = (pointer)this;
-  
+
   mDoExt_McaMorf__calc(this->parent.mpMcaMorf);
 
   daNPCTest__InitJntCtrl(this, modelData);

@@ -19,7 +19,6 @@ import { WWOEvents } from './WWOAPI/WWOAPI';
 import { parseFlagChanges } from './parseFlagChanges';
 import { PuppetOverlord } from './data/linkPuppet/PuppetOverlord';
 
-
 export class WWOnlineClient {
     @InjectCore()
     core!: API.IWWCore;

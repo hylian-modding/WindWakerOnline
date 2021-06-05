@@ -1,3 +1,2 @@
 sys/main.dol:
-  check_command_start: 0x81800000
-  check_scene_change: 0x818000E4
+  check_scene_change: 0x81800500

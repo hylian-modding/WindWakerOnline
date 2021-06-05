@@ -1,7 +1,7 @@
 import IMemory from 'modloader64_api/IMemory';
 import { Command, ICommandBuffer } from '../../WWOAPI/WWOAPI';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
-const instance: number = 0x81801000;
+export const instance: number = 0x81801000;
 const slotSize = 0x8;
 const slotCount = 64;
 
@@ -55,40 +55,26 @@ export class CommandBuffer implements ICommandBuffer {
     runCommand(
         command: Command,
         data: Buffer,
-        uuid?: number,
+        uuid: number,
     ): number {
         let pointer = 0;
         let currentCommands = this.modloader.emulator.rdramRead32(instance); // Number of commands to process
-        let offset = currentCommands * 0x2c;
+        let offset = 8 + (currentCommands * 0x28);
+        console.log("Current Commands: " + (currentCommands + 1));
+
         this.modloader.emulator.rdramWrite32(instance, currentCommands + 1);
-
         this.modloader.emulator.rdramWrite32(instance + offset, command);
+        this.modloader.emulator.rdramWrite32(instance + offset + 4, uuid);
 
-        let uuidBuf = Buffer.alloc(8);
-
-        if (uuid !== undefined) {
-            uuidBuf.writeBigUInt64BE(BigInt(uuid), 0);
-        }
-
-        this.modloader.emulator.rdramWriteBuffer(instance + offset + 4, uuidBuf);
+        console.log("tried to write uuid to command: " + uuid + ", " + this.modloader.emulator.rdramRead32(instance + offset + 4) + " was written!")
 
         switch (command) {
             case Command.COMMAND_TYPE_PUPPET_DESPAWN:
-                this.modloader.emulator.rdramWriteBuffer(instance + offset + 0xc, data)
+                this.modloader.emulator.rdramWriteBuffer(instance + offset + 0xC, data)
                 break;
 
             case Command.COMMAND_TYPE_PUPPET_SPAWN:
-                this.modloader.utils.setTimeoutFrames(() => {
 
-                    for (let i: number = 0; i < 64; i++) {
-                        let temp = this.modloader.emulator.rdramReadBuffer(instance + 0x904 + ((i * 0x14) + 0x4), 0x8)
-
-                        if (Number(temp.readBigUInt64BE(0)) === uuid) {
-                            pointer = this.modloader.emulator.rdramRead32(instance + 0x904 + ((i * 0x14) + 0x10))
-                        }
-                    }
-                    if(pointer !== 0) return pointer;
-                }, 1);
                 break;
         }
 

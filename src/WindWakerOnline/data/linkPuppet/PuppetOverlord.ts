@@ -12,6 +12,9 @@ import { IWWOnlineHelpers, RemoteSoundPlayRequest, WWOEvents } from '@WindWakerO
 import { WWO_PuppetPacket, WWO_PuppetWrapperPacket, WWO_ScenePacket, WWO_SceneRequestPacket } from '../WWOPackets';
 import { ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
 import Vector3 from 'modloader64_api/math/Vector3';
+import { instance } from './CommandBuffer';
+
+const emptyBuf = Buffer.alloc(0x18)
 
 export class PuppetOverlord {
   private puppets: Map<string, Puppet> = new Map<string, Puppet>();
@@ -19,6 +22,7 @@ export class PuppetOverlord {
   fakeClientPuppet!: Puppet;
   private amIAlone = true;
   private playersAwaitingPuppets: INetworkPlayer[] = new Array<INetworkPlayer>();
+  spawnIndex: number = 1;
 
   @ParentReference()
   private parent!: IWWOnlineHelpers;
@@ -39,7 +43,7 @@ export class PuppetOverlord {
       this.ModLoader.me,
       this.core,
       // The pointer here points to blank space, so should be fine.
-      0x6011e8,
+      0x0,
       this.ModLoader,
       this.parent
     );
@@ -140,7 +144,12 @@ export class PuppetOverlord {
   processAwaitingSpawns() {
     if (this.awaiting_spawn.length > 0 && !this.queuedSpawn) {
       let puppet: Puppet = this.awaiting_spawn.shift() as Puppet;
-      if (puppet.scene == this.core.global.current_scene_name && this.core.helper.isLinkExists() && this.core.helper.isLinkControllable()) puppet.spawn();
+      if (puppet.scene == this.core.global.current_scene_name && this.core.helper.isLinkExists() && this.core.helper.isLinkControllable()) {
+        console.log("Spawning puppet")
+        this.spawnIndex++;
+        puppet.uniqueID = this.spawnIndex;
+        puppet.spawn(this.spawnIndex);
+      }
     }
   }
 
@@ -167,7 +176,7 @@ export class PuppetOverlord {
 
   sendPuppetPacket() {
     let distances: number[] = [];
-    this.clientStorage.scaledDistances.forEach((value: number)=>{
+    this.clientStorage.scaledDistances.forEach((value: number) => {
       distances.push(value);
     });
     distances = distances.sort();
@@ -187,6 +196,8 @@ export class PuppetOverlord {
     if (this.puppets.has(packet.player.uuid)) {
       let puppet: Puppet = this.puppets.get(packet.player.uuid)!;
       let actualPacket = JSON.parse(packet.data) as WWO_PuppetPacket;
+
+      if (puppet.data.pointer === 0) return;
 
       let e = new RemoteSoundPlayRequest(packet.player, actualPacket.data, 0);
       bus.emit(WWOEvents.ON_REMOTE_PLAY_SOUND, e);
@@ -219,7 +230,7 @@ export class PuppetOverlord {
   }
 
   @onTick()
-  onTick() {
+  onTick(frame: number) {
     if (this.core.helper.isTitleScreen() ||
       this.core.helper.isPaused() ||
       !this.core.helper.isLinkExists() ||
@@ -228,6 +239,44 @@ export class PuppetOverlord {
     ) {
       return;
     }
+
+
+    for (let i: number = 0; i < 64; i++) {
+      let offset = (instance + 0xA08) + (i * 0x28)
+      let returnUUID = this.ModLoader.emulator.rdramRead32(offset + 0x4)
+
+      this.puppets.forEach((puppet: Puppet, key: string, map: Map<string, Puppet>) => {
+        if (puppet.isSpawning) {
+          //if (frame % 7 === 0) console.log("puppet " + puppet.player.uuid + " is spawning" + " (uniqueID is " + puppet.uniqueID + ")")
+          if (puppet.uniqueID === 0) console.log("HEY IDIOT! Why does a puppet have a uuid (spawn index) of 0?!")
+
+          if (returnUUID === puppet.uniqueID && returnUUID !== 0 && puppet.uniqueID !== 0) {
+            let pointer = this.ModLoader.emulator.rdramRead32(offset + 0x8)
+            let debug = this.ModLoader.emulator.rdramRead32(offset + 0xC)
+            let result = this.ModLoader.emulator.rdramRead32(offset + 0x10)
+            console.log("returnUUID is " + returnUUID.toString(16) + " puppet.uniqueID is " + puppet.uniqueID.toString(16) + " is addr of this returnCommand is " + offset.toString(16) + " pointer is " + pointer.toString(16) + " debug is " + debug.toString(16) + " result is " + result + " instance is " + instance.toString(16))
+
+            if (pointer === 0xFFFFFFFF && debug === 0xDEADDEAD) {
+              console.log("Puppet failed to spawn!");
+            }
+            else if (pointer) {
+              console.log("WE GOT THE POINTER!!");
+              puppet.data.pointer = pointer;
+
+              puppet.doNotDespawnMe(puppet.data.pointer);
+              puppet.void = this.ModLoader.math.rdramReadV3(puppet.data.pointer + 0x1F8);
+              puppet.isSpawned = true;
+              puppet.isSpawning = false;
+              bus.emit(WWOEvents.PLAYER_PUPPET_SPAWNED, puppet);
+            }
+
+            // if we handled this return object, wipe it
+            this.ModLoader.emulator.rdramWriteBuffer(offset, emptyBuf)
+          }
+        }
+      });
+    }
+
     this.processNewPlayers();
     this.processAwaitingSpawns();
     this.lookForMissingOrStrandedPuppets();
