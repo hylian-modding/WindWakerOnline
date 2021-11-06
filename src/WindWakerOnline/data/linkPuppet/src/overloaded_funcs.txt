@@ -1,2 +1,0 @@
-0x8006f298: getNameRes
-0x80012a2c: calc_vtbl_cb

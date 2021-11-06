@@ -1,54 +1,49 @@
-import { InjectCore } from 'modloader64_api/CoreInjection';
-import { bus, EventHandler, EventsClient } from 'modloader64_api/EventHandler';
-import { INetworkPlayer, LobbyData, NetworkHandler, IPacketHeader } from 'modloader64_api/NetworkHandler';
-import * as API from 'WindWaker/API/Imports';
-import { createInventoryFromContext, createQuestFromContext, mergeInventoryData, mergeQuestData, InventorySave, applyInventoryToContext, applyQuestSaveToContext, QuestSave } from './data/WWOSaveData';
-import { WWO_DownloadRequestPacket, WWO_SubscreenSyncPacket, WWO_ScenePacket, WWO_SceneRequestPacket, WWO_DownloadResponsePacket, WWO_DownloadResponsePacket2, WWO_ClientFlagUpdate, WWO_ServerFlagUpdate, } from './data/WWOPackets';
-import path from 'path';
-import { GUITunnelPacket } from 'modloader64_api/GUITunnel';
+import { WWOEvents, WWOPlayerScene, } from "./api/WWOAPI";
+import path from "path";
+import { InjectCore } from "modloader64_api/CoreInjection";
+import { DiscordStatus } from "modloader64_api/Discord";
+import { EventHandler, PrivateEventHandler, EventsClient, bus } from "modloader64_api/EventHandler";
+import { IModLoaderAPI, IPlugin, ModLoaderEvents } from "modloader64_api/IModLoaderAPI";
+import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
+import { INetworkPlayer, LobbyData, NetworkHandler } from "modloader64_api/NetworkHandler";
+import { Preinit, Init, Postinit, onTick } from "modloader64_api/PluginLifecycle";
+import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
+import { WWO_UpdateSaveDataPacket, WWO_DownloadRequestPacket, WWO_ScenePacket, WWO_SceneRequestPacket, WWO_DownloadResponsePacket, WWO_BottleUpdatePacket, WWO_ErrorPacket, WWO_ClientFlagUpdate, WWO_ServerFlagUpdate } from "./network/WWOPackets";
+import { IWWOnlineLobbyConfig, WWOnlineConfigCategory } from "./WWOnline";
+import { WWOSaveData } from "./save/WWOnlineSaveData";
+import { WWOnlineStorage } from "./storage/WWOnlineStorage";
+import { WWOnlineStorageClient } from "./storage/WWOnlineStorageClient";
 import fs from 'fs';
-import { WWOnlineStorageClient } from './WWOnlineStorageClient';
-import { DiscordStatus } from 'modloader64_api/Discord';
-import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
-import { Init, Preinit, Postinit, onTick, onViUpdate, onCreateResources } from 'modloader64_api/PluginLifecycle';
-import { IWWOnlineLobbyConfig, WWOnlineConfigCategory } from './WindWakerOnline';
-import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
-import { SidedProxy, ProxySide } from 'modloader64_api/SidedProxy/SidedProxy';
-import { WWOnlineStorage } from './WWOnlineStorage';
-import { WWOEvents } from './WWOAPI/WWOAPI';
-import { parseFlagChanges } from './parseFlagChanges';
-import { PuppetOverlord } from './data/linkPuppet/PuppetOverlord';
+import { WWO_PRIVATE_EVENTS } from "./api/InternalAPI";
+import WWSerialize from "./storage/WWSerialize";
+import { InventoryItem, IWWCore, WWEvents } from "WindWaker/API/WWAPI";
+import { parseFlagChanges } from "./save/parseFlagChanges";
+import * as API from "WindWaker/API/WWAPI";
+import { PuppetOverlord } from "./puppet/PuppetOverlord";
 
-export class WWOnlineClient {
+export default class WWOnlineClient {
     @InjectCore()
-    core!: API.IWWCore;
+    core!: IWWCore;
 
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
 
-    @SidedProxy(ProxySide.CLIENT, PuppetOverlord)
-    puppets!: PuppetOverlord;
+    @ParentReference()
+    parent!: IPlugin;
+
+    //@SidedProxy(ProxySide.CLIENT, PuppetOverlord)
+    //puppets!: PuppetOverlord;
 
     LobbyConfig: IWWOnlineLobbyConfig = {} as IWWOnlineLobbyConfig;
-    clientStorage!: WWOnlineStorageClient;
+    clientStorage: WWOnlineStorageClient = new WWOnlineStorageClient();
     config!: WWOnlineConfigCategory;
-    counter = 0;
-    lastMagicValue: number = 0xFF;
 
-    sendPacketToPlayersInScene(packet: IPacketHeader) {
-        try {
-            Object.keys(this.clientStorage.players).forEach((key: string) => {
-                //if (storage.players[key] === storage.players[packet.player.uuid]) {
-                if (this.clientStorage.networkPlayerInstances[key].uuid !== packet.player.uuid) {
-                    this.ModLoader.serverSide.sendPacketToSpecificPlayer(
-                        packet,
-                        this.clientStorage.networkPlayerInstances[key]
-                    );
-                }
-                //}
-            });
-        } catch (err) { }
-    }
+    syncContext: number = -1;
+    syncTimer: number = 0;
+    synctimerMax: number = 60 * 20;
+    syncPending: boolean = false;
+
+    lastMagicValue: number = 0xFF;
 
     @EventHandler(EventsClient.ON_PLAYER_JOIN)
     onPlayerJoined(player: INetworkPlayer) {
@@ -65,68 +60,54 @@ export class WWOnlineClient {
     @Preinit()
     preinit() {
         this.config = this.ModLoader.config.registerConfigCategory("WWOnline") as WWOnlineConfigCategory;
-        if (this.puppets !== undefined) {
-            this.puppets.clientStorage = this.clientStorage;
-        }
+        //if (this.puppets !== undefined) {
+        //    this.puppets.clientStorage = this.clientStorage;
+        //}
     }
 
     @Init()
     init(): void {
-
     }
 
     @Postinit()
     postinit() {
-        //this.clientStorage.scene_keys = JSON.parse(fs.readFileSync(__dirname + '/data/scene_names.json').toString());
-        //this.clientStorage.room_keys = JSON.parse(fs.readFileSync(__dirname + '/data/room_names.json').toString());
+        //this.clientStorage.scene_keys = JSON.parse(fs.readFileSync(__dirname + '/localization/Scene_numbers.json').toString());
+        //this.clientStorage.localization = JSON.parse(fs.readFileSync(__dirname + '/localization/en_US.json').toString());
         let status: DiscordStatus = new DiscordStatus('Playing WWOnline', 'On the title screen');
         status.smallImageKey = 'WWO';
         status.partyId = this.ModLoader.clientLobby;
         status.partyMax = 30;
         status.partySize = 1;
         this.ModLoader.gui.setDiscordStatus(status);
+        this.clientStorage.saveManager = new WWOSaveData(this.core, this.ModLoader);
+        this.ModLoader.utils.setIntervalFrames(() => {
+            this.inventoryUpdateTick();
+        }, 20);
     }
 
     updateInventory() {
-        let inventory = createInventoryFromContext(this.core.save);
-        let quest = createQuestFromContext(this.core.save.questStatus);
-
-        mergeInventoryData(this.clientStorage.inventoryStorage, inventory);
-        mergeQuestData(this.clientStorage.questStorage, quest);
-
-        this.ModLoader.clientSide.sendPacket(
-            new WWO_SubscreenSyncPacket(this.clientStorage.inventoryStorage,
-                this.clientStorage.questStorage,
-                this.ModLoader.clientLobby
-            ));
-        this.clientStorage.needs_update = false;
+        if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNameValid() || this.core.helper.isPaused() || !this.clientStorage.first_time_sync) return;
+        if (this.syncTimer > this.synctimerMax) {
+            this.clientStorage.lastPushHash = this.ModLoader.utils.hashBuffer(Buffer.from("RESET"));
+            this.ModLoader.logger.debug("Forcing resync due to timeout.");
+        }
+        let save = this.clientStorage.saveManager.createSave();
+        if (this.clientStorage.lastPushHash !== this.clientStorage.saveManager.hash) {
+            this.ModLoader.privateBus.emit(WWO_PRIVATE_EVENTS.DOING_SYNC_CHECK, {});
+            //this.ModLoader.privateBus.emit(WWO_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
+            this.ModLoader.clientSide.sendPacket(new WWO_UpdateSaveDataPacket(this.ModLoader.clientLobby, save, this.clientStorage.world));
+            this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
+            this.syncTimer = 0;
+        }
     }
 
     updateFlags() {
 
-        let swordLevel: any = parseFlagChanges(this.core.save.questStatus.swordLevel, this.clientStorage.questStorage.swordLevel);
-        let shieldLevel: any = parseFlagChanges(this.core.save.questStatus.shieldLevel, this.clientStorage.questStorage.shieldLevel);
-        let bracelet: any = parseFlagChanges(this.core.save.questStatus.bracelet, this.clientStorage.questStorage.bracelet);
-        let pirate_charm: any = parseFlagChanges(this.core.save.questStatus.pirate_charm, this.clientStorage.questStorage.pirate_charm);
-        let hero_charm: any = parseFlagChanges(this.core.save.questStatus.hero_charm, this.clientStorage.questStorage.hero_charm);
-        let sectors: any = parseFlagChanges(this.core.save.questStatus.sectors, this.clientStorage.questStorage.sectors);
-        let dec_tri: any = parseFlagChanges(this.core.save.questStatus.deciphered_triforce, this.clientStorage.questStorage.deciphered_triforce);
-        let pearls: any = parseFlagChanges(this.core.save.questStatus.pearls, this.clientStorage.questStorage.pearls);
-        let song: any = parseFlagChanges(this.core.save.questStatus.songs, this.clientStorage.questStorage.songs);
-        let triforce: any = parseFlagChanges(this.core.save.questStatus.triforce, this.clientStorage.questStorage.triforce);
-        let compChart: any = parseFlagChanges(this.core.save.questStatus.completed_charts, this.clientStorage.questStorage.completed_charts);
-        let openChart: any = parseFlagChanges(this.core.save.questStatus.opened_charts, this.clientStorage.questStorage.opened_charts);
-        let ownChart: any = parseFlagChanges(this.core.save.questStatus.owned_charts, this.clientStorage.questStorage.owned_charts);
-
-        let spoils_slots: any = parseFlagChanges(this.core.save.inventory.spoils_slots, this.clientStorage.inventoryStorage.spoils_slots);
-        let bait_slots: any = parseFlagChanges(this.core.save.inventory.bait_slots, this.clientStorage.inventoryStorage.bait_slots);
-        let delivery_slots: any = parseFlagChanges(this.core.save.inventory.delivery_slots, this.clientStorage.inventoryStorage.delivery_slots);
-        let owned_delivery: any = parseFlagChanges(this.core.save.inventory.owned_delivery, this.clientStorage.inventoryStorage.owned_delivery);
-        let owned_spoils: any = parseFlagChanges(this.core.save.inventory.owned_spoils, this.clientStorage.inventoryStorage.owned_spoils);
-        let owned_bait: any = parseFlagChanges(this.core.save.inventory.owned_bait, this.clientStorage.inventoryStorage.owned_bait);
-        let count_spoils: any = parseFlagChanges(this.core.save.inventory.count_spoils, this.clientStorage.inventoryStorage.count_spoils);
-        let count_delivery: any = parseFlagChanges(this.core.save.inventory.count_delivery, this.clientStorage.inventoryStorage.count_delivery);
-        let count_bait: any = parseFlagChanges(this.core.save.inventory.count_bait, this.clientStorage.inventoryStorage.count_bait);
+        Object.keys(this.core.save.questStatus).forEach((key: string) => {
+            if (Buffer.isBuffer(this.core.save.questStatus[key])) {
+                parseFlagChanges(this.core.save.questStatus[key], this.clientStorage.questStorage[key]);
+            }
+        })
 
         this.ModLoader.clientSide.sendPacket(new WWO_ClientFlagUpdate(
             this.clientStorage.questStorage.swordLevel,
@@ -153,19 +134,35 @@ export class WWOnlineClient {
             this.clientStorage.inventoryStorage.count_bait,
             this.ModLoader.clientLobby));
     }
-    @EventHandler(API.WWEvents.ON_SAVE_LOADED)
-    onSaveLoaded(evt: any) {
-        this.ModLoader.logger.debug("On_Save_Loaded");
-        setTimeout(() => {
-            if (this.LobbyConfig.data_syncing) {
-                this.ModLoader.clientSide.sendPacket(new WWO_DownloadRequestPacket(this.ModLoader.clientLobby));
+
+    updateBottles(onlyfillCache = false) {
+        let bottles: InventoryItem[] = [
+            this.core.save.inventory.FIELD_BOTTLE1,
+            this.core.save.inventory.FIELD_BOTTLE2,
+            this.core.save.inventory.FIELD_BOTTLE3,
+            this.core.save.inventory.FIELD_BOTTLE4,
+        ];
+        for (let i = 0; i < bottles.length; i++) {
+            if (bottles[i] !== this.clientStorage.bottleCache[i]) {
+                this.clientStorage.bottleCache[i] = bottles[i];
+                this.ModLoader.logger.info('Bottle update.');
+                if (!onlyfillCache) {
+                    this.ModLoader.clientSide.sendPacket(new WWO_BottleUpdatePacket(i, bottles[i], this.ModLoader.clientLobby));
+                }
             }
-        }, 100);
+        }
     }
 
     //------------------------------
     // Lobby Setup
     //------------------------------
+
+    @EventHandler(EventsClient.ON_SERVER_CONNECTION)
+    onConnect() {
+        this.ModLoader.logger.debug("Connected to server.");
+        this.clientStorage.first_time_sync = false;
+    }
+
     @EventHandler(EventsClient.CONFIGURE_LOBBY)
     onLobbySetup(lobby: LobbyData): void {
         lobby.data['WWOnline:data_syncing'] = true;
@@ -173,41 +170,57 @@ export class WWOnlineClient {
 
     @EventHandler(EventsClient.ON_LOBBY_JOIN)
     onJoinedLobby(lobby: LobbyData): void {
+        this.clientStorage.first_time_sync = false;
         this.LobbyConfig.data_syncing = lobby.data['WWOnline:data_syncing'];
         this.ModLoader.logger.info('WWOnline settings inherited from lobby.');
-    }
-
-    @EventHandler(API.WWEvents.ON_LOADING_ZONE)
-    onLoadingZone(evt: any) {
-        this.ModLoader.logger.debug("I've touched a loading zone.");
-    }
-
-    @EventHandler(EventsClient.ON_PLAYER_LEAVE)
-    onPlayerLeft(player: INetworkPlayer) {
-
     }
 
     //------------------------------
     // Scene handling
     //------------------------------
 
-    @EventHandler(API.WWEvents.ON_SCENE_CHANGE)
+    @EventHandler(WWEvents.ON_SAVE_LOADED)
+    onSaveLoad(Scene: number) {
+        if (!this.clientStorage.first_time_sync && !this.syncPending) {
+
+            this.ModLoader.utils.setTimeoutFrames(() => {
+                if (this.LobbyConfig.data_syncing) {
+                    this.ModLoader.me.data["world"] = this.clientStorage.world;
+                    this.ModLoader.clientSide.sendPacket(new WWO_DownloadRequestPacket(this.ModLoader.clientLobby, new WWOSaveData(this.core, this.ModLoader).createSave()));
+                }
+            }, 50);
+            this.syncPending = true;
+        }
+    }
+
+    @EventHandler(WWEvents.ON_SCENE_CHANGE)
     onSceneChange(scene: string) {
+        if (!this.clientStorage.first_time_sync && !this.syncPending) {
+            this.ModLoader.utils.setTimeoutFrames(() => {
+                if (this.LobbyConfig.data_syncing) {
+                    this.ModLoader.me.data["world"] = this.clientStorage.world;
+                    this.ModLoader.clientSide.sendPacket(new WWO_DownloadRequestPacket(this.ModLoader.clientLobby, new WWOSaveData(this.core, this.ModLoader).createSave()));
+                    //this.ModLoader.clientSide.sendPacket(new WWO_RomFlagsPacket(this.ModLoader.clientLobby, RomFlags.isWWR, RomFlags.isVanilla));
+                }
+            }, 300);
+            this.syncPending = true;
+        }
         this.ModLoader.clientSide.sendPacket(
             new WWO_ScenePacket(
                 this.ModLoader.clientLobby,
                 scene
             )
         );
-        //this.ModLoader.logger.info('client: I moved to scene ' + this.core.global.current_scene_name.toString().replace(/\0.*$/g, '') + '.');
-        this.ModLoader.logger.info('client: I moved to scene: ' + this.core.global.current_scene_name + '.');
-
+        this.ModLoader.logger.info('client: I moved to scene ' + scene + '.');
         if (this.core.helper.isSceneNameValid()) {
             this.ModLoader.gui.setDiscordStatus(
                 new DiscordStatus(
-                    'Playing WWOnline',
+                    'Playing MMOnline',
                     'In ' +
-                    this.core.global.current_scene_name + '.')
+                    this.clientStorage.localization[
+                    this.clientStorage.scene_keys[scene]
+                    ]
+                )
             );
         }
     }
@@ -217,10 +230,16 @@ export class WWOnlineClient {
         this.ModLoader.logger.info(
             'client receive: Player ' +
             packet.player.nickname +
-            ' moved to scene: ' + this.core.global.current_scene_name +
+            ' moved to scene ' +
+            this.clientStorage.localization[
+            this.clientStorage.scene_keys[packet.scene]
+            ] +
             '.'
         );
-        this.clientStorage.players[packet.player.uuid] = packet.scene;
+        bus.emit(
+            WWOEvents.CLIENT_REMOTE_PLAYER_CHANGED_SCENES,
+            new WWOPlayerScene(packet.player, packet.lobby, packet.scene)
+        );
     }
 
     // This packet is basically 'where the hell are you?' if a player has a puppet on file but doesn't know what scene its suppose to be in.
@@ -237,51 +256,41 @@ export class WWOnlineClient {
         }
     }
 
-    // The server is giving me data.
-    @NetworkHandler('WWO_DownloadResponsePacket')
-    onDownloadPacket_client(packet: WWO_DownloadResponsePacket) {
-        this.ModLoader.logger.info('Retrieving savegame from server...');
-
-        applyInventoryToContext(packet.subscreen.inventory, this.core.save);
-
-        applyQuestSaveToContext(packet.subscreen.quest, this.core.save);
-
-        this.clientStorage.first_time_sync = true;
-    }
-
-    // I am giving the server data.
-    @NetworkHandler('WWO_DownloadResponsePacket2')
-    onDownPacket2_client(packet: WWO_DownloadResponsePacket2) {
-        this.clientStorage.first_time_sync = true;
-        this.ModLoader.logger.info('The lobby is mine!');
-
-        this.clientStorage.needs_update = true;
-    }
-
-    @NetworkHandler('WWO_SubscreenSyncPacket')
-    onItemSync_client(packet: WWO_SubscreenSyncPacket) {
+    @NetworkHandler('WWO_BottleUpdatePacket')
+    onBottle_client(packet: WWO_BottleUpdatePacket) {
         if (
             this.core.helper.isTitleScreen() ||
             !this.core.helper.isSceneNameValid()
         ) {
             return;
         }
-        let inventory: InventorySave = createInventoryFromContext(
-            this.core.save
-        ) as InventorySave;
-        let quest: QuestSave = createQuestFromContext(
-            this.core.save.questStatus
-        ) as QuestSave;
+        if (packet.player.data.world !== this.clientStorage.world) return;
+        if (!this.config.syncBottleContents) return;
+        let inventory = this.core.save.inventory;
+        if (packet.contents === InventoryItem.NONE) return;
+        this.clientStorage.bottleCache[packet.slot] = packet.contents;
+        switch (packet.slot) {
+            case 0:
+                inventory.FIELD_BOTTLE1 = packet.contents;
+                break;
+            case 1:
+                inventory.FIELD_BOTTLE2 = packet.contents;
+                break;
+            case 2:
+                inventory.FIELD_BOTTLE3 = packet.contents;
+                break;
+            case 3:
+                inventory.FIELD_BOTTLE4 = packet.contents;
+                break;
+        }
+        bus.emit(WWOEvents.ON_INVENTORY_UPDATE, this.core.save.inventory);
+        // Update hash.
+        this.clientStorage.saveManager.createSave();
+        this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
+    }
 
-        mergeInventoryData(this.clientStorage.inventoryStorage, inventory);
-        mergeQuestData(this.clientStorage.questStorage, quest);
-
-        //Packets
-        mergeInventoryData(this.clientStorage.inventoryStorage, packet.inventory);
-        mergeQuestData(this.clientStorage.questStorage, packet.quest);
-
-        applyInventoryToContext(this.clientStorage.inventoryStorage, this.core.save);
-        applyQuestSaveToContext(this.clientStorage.questStorage, this.core.save);
+    private isBottle(item: InventoryItem) {
+        return (item >= InventoryItem.BOTTLE_EMPTY && item <= InventoryItem.BOTTLE_FOREST_WATER)
     }
 
     healPlayer() {
@@ -304,8 +313,8 @@ export class WWOnlineClient {
 
     @EventHandler(WWOEvents.GAINED_PIECE_OF_HEART)
     onNeedsHeal(evt: any) {
-        this.refreshMagic();
         this.healPlayer();
+        this.refreshMagic();
     }
 
     @EventHandler(WWOEvents.MAGIC_METER_INCREASED)
@@ -321,218 +330,86 @@ export class WWOnlineClient {
                 this.core.save.questStatus.current_mp = API.MagicQuantities.EXTENDED;
                 break;
         }
+        this.refreshMagic();
     }
 
-    @EventHandler(ModLoaderEvents.ON_SOFT_RESET_PRE)
-    onReset(evt: any) {
-        this.clientStorage.first_time_sync = false;
+    // The server is giving me data.
+    @NetworkHandler('WWO_DownloadResponsePacket')
+    onDownloadPacket_client(packet: WWO_DownloadResponsePacket) {
+        this.syncPending = false;
+        if (
+            this.core.helper.isTitleScreen() ||
+            !this.core.helper.isSceneNameValid()
+        ) {
+            return;
+        }
+        if (!packet.host) {
+            if (packet.save) {
+                this.clientStorage.saveManager.forceOverrideSave(packet.save!, this.core.save as any, ProxySide.CLIENT);
+                //this.clientStorage.saveManager.processKeyRing_OVERWRITE(packet.keys!, this.clientStorage.saveManager.createKeyRing(), ProxySide.CLIENT);
+                // Update hash.
+                this.clientStorage.saveManager.createSave();
+                this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
+            }
+        } else {
+            this.ModLoader.logger.info("The lobby is mine!");
+        }
+        this.ModLoader.utils.setTimeoutFrames(() => {
+            this.clientStorage.first_time_sync = true;
+            this.updateBottles(true);
+        }, 20);
     }
 
-    @NetworkHandler('MMO_ServerFlagUpdate')
-    onSceneFlagSync_client(packet: WWO_ServerFlagUpdate) {
-
-        this.ModLoader.utils.clearBuffer(this.clientStorage.questStorage.bracelet);
-        this.ModLoader.utils.clearBuffer(this.clientStorage.questStorage.pirate_charm);
-        this.ModLoader.utils.clearBuffer(this.clientStorage.questStorage.hero_charm);
-        this.ModLoader.utils.clearBuffer(this.clientStorage.questStorage.sectors);
-        this.ModLoader.utils.clearBuffer(this.clientStorage.questStorage.deciphered_triforce);
-        this.ModLoader.utils.clearBuffer(this.clientStorage.questStorage.pearls);
-        this.ModLoader.utils.clearBuffer(this.clientStorage.questStorage.songs);
-        this.ModLoader.utils.clearBuffer(this.clientStorage.questStorage.triforce);
-        this.ModLoader.utils.clearBuffer(this.clientStorage.questStorage.completed_charts);
-        this.ModLoader.utils.clearBuffer(this.clientStorage.questStorage.opened_charts);
-        this.ModLoader.utils.clearBuffer(this.clientStorage.questStorage.owned_charts);
-
-
-        let bracelet = this.core.save.questStatus.bracelet;
-        let pirate_charm = this.core.save.questStatus.pirate_charm;
-        let hero_charm = this.core.save.questStatus.hero_charm;
-        let sectors = this.core.save.questStatus.sectors;
-        let dec_tri = this.core.save.questStatus.deciphered_triforce;
-        let pearls = this.core.save.questStatus.pearls;
-        let song = this.core.save.questStatus.songs;
-        let triforce = this.core.save.questStatus.triforce;
-        let compChart = this.core.save.questStatus.completed_charts;
-        let openChart = this.core.save.questStatus.opened_charts;
-        let ownChart = this.core.save.questStatus.owned_charts;
-        let spoils_slots = this.core.save.inventory.spoils_slots;
-        let bait_slots = this.core.save.inventory.bait_slots;
-        let delivery_slots = this.core.save.inventory.delivery_slots;
-        let owned_delivery = this.core.save.inventory.owned_delivery;
-        let owned_spoils = this.core.save.inventory.owned_spoils;
-        let owned_bait = this.core.save.inventory.owned_bait;
-        let count_spoils = this.core.save.inventory.count_spoils;
-        let count_delivery = this.core.save.inventory.count_delivery;
-        let count_bait = this.core.save.inventory.count_bait;
-
-        parseFlagChanges(
-            bracelet,
-            this.clientStorage.questStorage.bracelet
-        );
-        parseFlagChanges(
-            pirate_charm,
-            this.clientStorage.questStorage.pirate_charm
-        );
-        parseFlagChanges(
-            hero_charm,
-            this.clientStorage.questStorage.hero_charm
-        );
-        parseFlagChanges(
-            sectors,
-            this.clientStorage.questStorage.sectors
-        );
-        parseFlagChanges(
-            dec_tri,
-            this.clientStorage.questStorage.deciphered_triforce
-        );
-        parseFlagChanges(
-            pearls,
-            this.clientStorage.questStorage.pearls
-        );
-        parseFlagChanges(
-            song,
-            this.clientStorage.questStorage.songs
-        );
-        parseFlagChanges(
-            triforce,
-            this.clientStorage.questStorage.triforce
-        );
-        parseFlagChanges(
-            compChart,
-            this.clientStorage.questStorage.completed_charts
-        );
-        parseFlagChanges(
-            openChart,
-            this.clientStorage.questStorage.opened_charts
-        );
-        parseFlagChanges(
-            ownChart,
-            this.clientStorage.questStorage.owned_charts
-        );
-
-        for (let i = 0; i < packet.bracelet.byteLength; i++) {
-            let value = packet.bracelet[i];
-            if (this.clientStorage.questStorage.bracelet[i] !== value) {
-                this.clientStorage.questStorage.bracelet[i] |= value;
-            }
+    @NetworkHandler('WWO_UpdateSaveDataPacket')
+    onSaveUpdate(packet: WWO_UpdateSaveDataPacket) {
+        if (
+            this.core.helper.isTitleScreen() ||
+            !this.core.helper.isSceneNameValid()
+        ) {
+            //console.log("onSaveUpdate Failure 0")
+            return;
         }
-        for (let i = 0; i < packet.pirate_charm.byteLength; i++) {
-            let value = packet.pirate_charm[i];
-            if (this.clientStorage.questStorage.pirate_charm[i] !== value) {
-                this.clientStorage.questStorage.pirate_charm[i] |= value;
-            }
-        }
-        for (let i = 0; i < packet.hero_charm.byteLength; i++) {
-            let value = packet.hero_charm[i];
-            if (this.clientStorage.questStorage.hero_charm[i] !== value) {
-                this.clientStorage.questStorage.hero_charm[i] |= value;
-            }
-        }
-        for (let i = 0; i < packet.sectors.byteLength; i++) {
-            let value = packet.sectors[i];
-            if (this.clientStorage.questStorage.sectors[i] !== value) {
-                this.clientStorage.questStorage.sectors[i] |= value;
-            }
-        }
-        for (let i = 0; i < packet.dec_tri.byteLength; i++) {
-            let value = packet.dec_tri[i];
-            if (this.clientStorage.questStorage.deciphered_triforce[i] !== value) {
-                this.clientStorage.questStorage.deciphered_triforce[i] |= value;
-            }
-        }
-        for (let i = 0; i < packet.pearls.byteLength; i++) {
-            let value = packet.pearls[i];
-            if (this.clientStorage.questStorage.pearls[i] !== value) {
-                this.clientStorage.questStorage.pearls[i] |= value;
-            }
-        }
-        for (let i = 0; i < packet.song.byteLength; i++) {
-            let value = packet.song[i];
-            if (this.clientStorage.questStorage.songs[i] !== value) {
-                this.clientStorage.questStorage.songs[i] |= value;
-            }
-        }
-        for (let i = 0; i < packet.triforce.byteLength; i++) {
-            let value = packet.triforce[i];
-            if (this.clientStorage.questStorage.triforce[i] !== value) {
-                this.clientStorage.questStorage.triforce[i] |= value;
-            }
-        }
-        for (let i = 0; i < packet.compChart.byteLength; i++) {
-            let value = packet.compChart[i];
-            if (this.clientStorage.questStorage.completed_charts[i] !== value) {
-                this.clientStorage.questStorage.completed_charts[i] |= value;
-            }
-        }
-        for (let i = 0; i < packet.openChart.byteLength; i++) {
-            let value = packet.openChart[i];
-            if (this.clientStorage.questStorage.opened_charts[i] !== value) {
-                this.clientStorage.questStorage.opened_charts[i] |= value;
-            }
-        }
-        for (let i = 0; i < packet.ownChart.byteLength; i++) {
-            let value = packet.ownChart[i];
-            if (this.clientStorage.questStorage.owned_charts[i] !== value) {
-                this.clientStorage.questStorage.owned_charts[i] |= value;
-            }
+        if (packet.world !== this.clientStorage.world) {
+            //console.log("onSaveUpdate Failure 1")
+            return;
         }
 
-        this.core.save.questStatus.bracelet = this.clientStorage.questStorage.bracelet;
-        this.core.save.questStatus.pirate_charm = this.clientStorage.questStorage.pirate_charm;
-        this.core.save.questStatus.hero_charm = this.clientStorage.questStorage.hero_charm;
-        this.core.save.questStatus.sectors = this.clientStorage.questStorage.sectors;
-        this.core.save.questStatus.deciphered_triforce = this.clientStorage.questStorage.deciphered_triforce;
-        this.core.save.questStatus.pearls = this.clientStorage.questStorage.pearls;
-        this.core.save.questStatus.songs = this.clientStorage.questStorage.songs;
-        this.core.save.questStatus.triforce = this.clientStorage.questStorage.triforce;
-        this.core.save.questStatus.completed_charts = this.clientStorage.questStorage.completed_charts;
-        this.core.save.questStatus.opened_charts = this.clientStorage.questStorage.opened_charts;
-        this.core.save.questStatus.owned_charts = this.clientStorage.questStorage.owned_charts;
+        this.clientStorage.saveManager.applySave(packet.save);
+        // Update hash.
+        this.clientStorage.saveManager.createSave();
+        this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
+    }
+    
+    @NetworkHandler('WWO_ErrorPacket')
+    onError(packet: WWO_ErrorPacket) {
+        this.ModLoader.logger.error(packet.message);
     }
 
     @onTick()
     onTick() {
         if (
             !this.core.helper.isTitleScreen() &&
-            this.core.helper.isLinkExists() &&
             this.core.helper.isSceneNameValid()
         ) {
             if (!this.core.helper.isPaused()) {
+                this.ModLoader.me.data["world"] = this.clientStorage.world;
                 if (!this.clientStorage.first_time_sync) {
                     return;
                 }
                 if (this.LobbyConfig.data_syncing) {
-                    if (this.counter >= 300) {
-                        this.clientStorage.needs_update = true;
-                        this.counter = 0;
-                    }
-                    if (!this.core.helper.isLinkControllable()) this.clientStorage.needs_update = true;
-                    if (this.core.helper.isLinkControllable() && this.clientStorage.needs_update && this.LobbyConfig.data_syncing) {
-                        this.updateInventory();
-                        this.updateFlags();
-                        this.clientStorage.needs_update = false;
-                    }
+                    this.updateBottles();
+                    this.syncTimer++;
+                }
+                if (this.lastMagicValue != 0xFF) {
+                    this.core.save.questStatus.current_mp = this.lastMagicValue;
+                    this.lastMagicValue = 0xFF;
                 }
             }
-
-            if (this.lastMagicValue != 0xFF) {
-                this.core.save.questStatus.current_mp = this.lastMagicValue;
-                this.lastMagicValue = 0xFF;
-            }
-
-            if (this.LobbyConfig.data_syncing && this.core.helper.isPaused()) {
-                if (!this.clientStorage.first_time_sync) {
-                    return;
-                }
-                this.clientStorage.needs_update = true;
-            }
-            this.counter += 1;
         }
     }
 
-    @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
-    onRomPatched(evt: any) {
-        let iso: Buffer = evt.rom;
-        iso.writeUInt16BE(0x0400, 0x444);
+    inventoryUpdateTick() {
+        this.updateInventory();
+        this.updateFlags();
     }
 }

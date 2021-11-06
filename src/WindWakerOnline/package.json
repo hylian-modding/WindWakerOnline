@@ -2,9 +2,9 @@
   "name": "WindWakerOnline",
   "version": "1.0.0",
   "description": "",
-  "main": "WindWakerOnline.js",
-  "author": "Psi-Hate",
-  "credits": "Puppet Master: denoflions || Game Consultant: LagoLunatic",
+  "main": "WWOnline.js",
+  "author": "Psi-Hate, denoflions",
+  "credits": "Drahsid, LagoLunatic",
   "license": "GPL-3.0",
   "core": "WindWaker",
   "modloader64_deps": {

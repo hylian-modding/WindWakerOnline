@@ -1,2 +1,0 @@
-sys/main.dol:
-  check_scene_change: 0x81800500

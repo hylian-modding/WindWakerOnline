@@ -10,3 +10,6 @@ cores/
 modloader64-config.json
 modloader64-p2-config.json
 src/test.mp
+src/WindWakerOnline/puppet/src/
+src/WindWakerOnline/puppet/CommandBuffer/
+WWO.code-workspace
