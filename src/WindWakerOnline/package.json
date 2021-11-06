@@ -10,5 +10,8 @@
   "modloader64_deps": {
     "WindWaker": "https://github.com/hylian-modding/Core-WindWaker.git"
   },
-  "modloader64_aliases": {}
+  "modloader64_aliases": {},
+  "dependencies": {
+    "bson": "^4.5.4"
+  }
 }
