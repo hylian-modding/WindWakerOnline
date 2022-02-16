@@ -71,8 +71,8 @@ export default class WWOnlineClient {
 
     @Postinit()
     postinit() {
-        //this.clientStorage.scene_keys = JSON.parse(fs.readFileSync(__dirname + '/localization/Scene_numbers.json').toString());
-        //this.clientStorage.localization = JSON.parse(fs.readFileSync(__dirname + '/localization/en_US.json').toString());
+        //this.clientStorage.scene_keys = JSON.parse(fs.readFileSync(__dirname + '/localization/scene_names.json').toString());
+        this.clientStorage.localization = JSON.parse(fs.readFileSync(__dirname + '/localization/scene_names.json').toString());
         let status: DiscordStatus = new DiscordStatus('Playing WWOnline', 'On the title screen');
         status.smallImageKey = 'WWO';
         status.partyId = this.ModLoader.clientLobby;
@@ -211,14 +211,14 @@ export default class WWOnlineClient {
                 scene
             )
         );
-        this.ModLoader.logger.info('client: I moved to scene ' + scene + '.');
+        this.ModLoader.logger.info('client: I moved to scene ' + (this.clientStorage.localization[scene] || scene) + '.');
         if (this.core.helper.isSceneNameValid()) {
             this.ModLoader.gui.setDiscordStatus(
                 new DiscordStatus(
-                    'Playing MMOnline',
+                    'Playing WindWakerOnline',
                     'In ' +
                     this.clientStorage.localization[
-                    this.clientStorage.scene_keys[scene]
+                    scene
                     ]
                 )
             );
@@ -232,7 +232,7 @@ export default class WWOnlineClient {
             packet.player.nickname +
             ' moved to scene ' +
             this.clientStorage.localization[
-            this.clientStorage.scene_keys[packet.scene]
+            packet.scene
             ] +
             '.'
         );
@@ -379,7 +379,7 @@ export default class WWOnlineClient {
         this.clientStorage.saveManager.createSave();
         this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
     }
-    
+
     @NetworkHandler('WWO_ErrorPacket')
     onError(packet: WWO_ErrorPacket) {
         this.ModLoader.logger.error(packet.message);
