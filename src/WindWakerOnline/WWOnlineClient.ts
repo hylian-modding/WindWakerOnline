@@ -1,4 +1,4 @@
-import { WWOEvents, WWOPlayerScene, } from "./api/WWOAPI";
+import { WWOEvents, WWOPlayerRoom, WWOPlayerScene, } from "./api/WWOAPI";
 import path from "path";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { DiscordStatus } from "modloader64_api/Discord";
@@ -8,7 +8,7 @@ import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { INetworkPlayer, LobbyData, NetworkHandler } from "modloader64_api/NetworkHandler";
 import { Preinit, Init, Postinit, onTick } from "modloader64_api/PluginLifecycle";
 import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
-import { WWO_UpdateSaveDataPacket, WWO_DownloadRequestPacket, WWO_ScenePacket, WWO_SceneRequestPacket, WWO_DownloadResponsePacket, WWO_BottleUpdatePacket, WWO_ErrorPacket, WWO_ClientFlagUpdate, WWO_ServerFlagUpdate } from "./network/WWOPackets";
+import { WWO_UpdateSaveDataPacket, WWO_DownloadRequestPacket, WWO_ScenePacket, WWO_SceneRequestPacket, WWO_DownloadResponsePacket, WWO_BottleUpdatePacket, WWO_ErrorPacket, WWO_ClientFlagUpdate, WWO_ServerFlagUpdate, WWO_RoomPacket } from "./network/WWOPackets";
 import { IWWOnlineLobbyConfig, WWOnlineConfigCategory } from "./WWOnline";
 import { WWOSaveData } from "./save/WWOnlineSaveData";
 import { WWOnlineStorage } from "./storage/WWOnlineStorage";
@@ -73,6 +73,7 @@ export default class WWOnlineClient {
     postinit() {
         //this.clientStorage.scene_keys = JSON.parse(fs.readFileSync(__dirname + '/localization/scene_names.json').toString());
         this.clientStorage.localization = JSON.parse(fs.readFileSync(__dirname + '/localization/scene_names.json').toString());
+        this.clientStorage.localization_island = JSON.parse(fs.readFileSync(__dirname + '/localization/island_names.json').toString());
         let status: DiscordStatus = new DiscordStatus('Playing WWOnline', 'On the title screen');
         status.smallImageKey = 'WWO';
         status.partyId = this.ModLoader.clientLobby;
@@ -225,6 +226,21 @@ export default class WWOnlineClient {
         }
     }
 
+    @EventHandler(WWEvents.ON_ROOM_CHANGE)
+    onRoomChange(scene: string, room: number){
+        //Log when the player changes to a different island
+        if(scene === "sea" && room !== 0){
+            this.ModLoader.clientSide.sendPacket(
+                new WWO_RoomPacket(
+                    this.ModLoader.clientLobby,
+                    scene,
+                    room
+                )
+            );
+            this.ModLoader.logger.info('client: I moved to ' + (this.clientStorage.localization_island[room] || room) + '.');
+        }
+    }
+
     @NetworkHandler('WWO_ScenePacket')
     onSceneChange_client(packet: WWO_ScenePacket) {
         this.ModLoader.logger.info(
@@ -236,6 +252,25 @@ export default class WWOnlineClient {
             ] +
             '.'
         );
+        bus.emit(
+            WWOEvents.CLIENT_REMOTE_PLAYER_CHANGED_SCENES,
+            new WWOPlayerScene(packet.player, packet.lobby, packet.scene)
+        );
+    }
+
+    @NetworkHandler('WWO_RoomPacket')
+    onRoomChange_client(packet: WWO_RoomPacket) {
+        if(packet.scene === "sea" && packet.room !== 0){
+            this.ModLoader.logger.info(
+                'client receive: Player ' +
+                packet.player.nickname +
+                ' moved to ' +
+                this.clientStorage.localization_island[
+                packet.room
+                ] +
+                '.'
+            );
+        }
         bus.emit(
             WWOEvents.CLIENT_REMOTE_PLAYER_CHANGED_SCENES,
             new WWOPlayerScene(packet.player, packet.lobby, packet.scene)

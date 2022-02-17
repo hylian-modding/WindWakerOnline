@@ -6,6 +6,7 @@ import { Puppet } from '../puppet/Puppet';
 
 export enum WWOEvents {
   SERVER_PLAYER_CHANGED_SCENES = 'WWOnline:onServerPlayerChangedScenes',
+  SERVER_PLAYER_CHANGED_ROOMS = 'WWOnline:onServerPlayerChangedRooms',
   CLIENT_REMOTE_PLAYER_CHANGED_SCENES = 'WWOnline:onRemotePlayerChangedScenes',
   ON_INVENTORY_UPDATE = 'WWOnline:OnInventoryUpdate',
   SAVE_DATA_ITEM_SET = 'WWOnline:SAVE_DATA_ITEM_SET',
@@ -28,6 +29,18 @@ export class WWOPlayerScene {
   constructor(player: INetworkPlayer, lobby: string, scene: string) {
     this.player = player;
     this.scene = scene;
+    this.lobby = lobby;
+  }
+}
+
+export class WWOPlayerRoom {
+  player: INetworkPlayer;
+  lobby: string;
+  room: number;
+
+  constructor(player: INetworkPlayer, lobby: string, room: number) {
+    this.player = player;
+    this.room = room;
     this.lobby = lobby;
   }
 }

@@ -37,6 +37,17 @@ export class WWO_ScenePacket extends Packet {
   }
 }
 
+export class WWO_RoomPacket extends Packet {
+  scene: string;
+  room: number;
+
+  constructor(lobby: string, scene: string, room: number) {
+    super('WWO_RoomPacket', 'WWOnline', lobby, true);
+    this.scene = scene;
+    this.room = room;
+  }
+}
+
 export class WWO_SceneRequestPacket extends Packet {
   constructor(lobby: string) {
     super('WWO_SceneRequestPacket', 'WWOnline', lobby, true);

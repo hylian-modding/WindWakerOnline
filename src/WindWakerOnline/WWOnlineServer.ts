@@ -7,7 +7,7 @@ import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { IPacketHeader, LobbyData, ServerNetworkHandler } from "modloader64_api/NetworkHandler";
 import { Preinit } from "modloader64_api/PluginLifecycle";
 import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
-import { WWO_ScenePacket, WWO_DownloadRequestPacket, WWO_DownloadResponsePacket, WWO_UpdateSaveDataPacket, WWO_ErrorPacket, WWO_ClientFlagUpdate, WWO_ServerFlagUpdate } from "./network/WWOPackets";
+import { WWO_ScenePacket, WWO_DownloadRequestPacket, WWO_DownloadResponsePacket, WWO_UpdateSaveDataPacket, WWO_ErrorPacket, WWO_ClientFlagUpdate, WWO_ServerFlagUpdate, WWO_RoomPacket } from "./network/WWOPackets";
 import { WWOSaveData } from "./save/WWOnlineSaveData";
 import { WWOnlineStorage, WWOnlineSave_Server } from "./storage/WWOnlineStorage";
 import WWSerialize from "./storage/WWSerialize";
@@ -118,6 +118,29 @@ export default class WWOnlineServer {
                 '.'
             );
             bus.emit(WWOEvents.SERVER_PLAYER_CHANGED_SCENES, new WWO_ScenePacket(packet.lobby, packet.scene));
+        } catch (err: any) {
+        }
+    }
+
+    @ServerNetworkHandler('WWO_RoomPacket')
+    onRoomChange_server(packet: WWO_RoomPacket) {
+        try {
+            let storage: WWOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+                packet.lobby,
+                this.parent
+            ) as WWOnlineStorage;
+            if (storage === null) {
+                return;
+            }
+            storage.players[packet.player.uuid] = packet.room;
+            this.ModLoader.logger.info(
+                'Server: Player ' +
+                packet.player.nickname +
+                ' moved to room ' +
+                packet.room +
+                '.'
+            );
+            bus.emit(WWOEvents.SERVER_PLAYER_CHANGED_ROOMS, new WWO_RoomPacket(packet.lobby, packet.scene, packet.room));
         } catch (err: any) {
         }
     }
