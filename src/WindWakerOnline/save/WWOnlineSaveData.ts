@@ -235,7 +235,7 @@ export class WWOSaveData implements ISaveSyncData {
         }
 
         //Quest Status Screen Flags
-        this.processMixedLoop(obj.questStatus, storage.questStatus, ["balladGales", "commandMelody", "windAria", "earthLyric", "songPassing", "windsRequiem"]);
+        this.processMixedLoop(obj.questStatus, storage.questStatus, []);
 
         let swordLevel = storage.questStatus.swordLevel;
         let shieldLevel = storage.questStatus.shieldLevel;
@@ -249,7 +249,8 @@ export class WWOSaveData implements ISaveSyncData {
         let completed_charts = storage.questStatus.completed_charts;
         let sectors = storage.questStatus.sectors;
         let deciphered_triforce = storage.questStatus.deciphered_triforce;
-
+        let tingle_statues = storage.questStatus.tingle_statues;
+        
         parseFlagChanges(obj.questStatus.swordLevel, swordLevel);
         parseFlagChanges(obj.questStatus.shieldLevel, shieldLevel);
         parseFlagChanges(obj.questStatus.songs, songs);
@@ -262,6 +263,7 @@ export class WWOSaveData implements ISaveSyncData {
         parseFlagChanges(obj.questStatus.completed_charts, completed_charts);
         parseFlagChanges(obj.questStatus.sectors, sectors);
         parseFlagChanges(obj.questStatus.deciphered_triforce, deciphered_triforce);
+        parseFlagChanges(obj.questStatus.tingle_statues, tingle_statues);
 
         storage.questStatus.triforce = triforce;
         storage.questStatus.pearls = pearls;
@@ -273,6 +275,7 @@ export class WWOSaveData implements ISaveSyncData {
         storage.questStatus.completed_charts = completed_charts;
         storage.questStatus.sectors = sectors;
         storage.questStatus.deciphered_triforce = deciphered_triforce;
+        storage.questStatus.tingle_statues = tingle_statues;
 
         //Equipment
         if (storage.questStatus.swordEquip === 0xFF && obj.questStatus.swordEquip < storage.questStatus.swordEquip) {

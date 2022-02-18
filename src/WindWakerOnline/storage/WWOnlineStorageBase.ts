@@ -39,6 +39,7 @@ export class QuestStorageBase implements IQuestStatus {
   completed_charts: Buffer = Buffer.alloc(0xF);
   sectors: Buffer = Buffer.alloc(0x30);
   deciphered_triforce: Buffer = Buffer.alloc(0x1);
+  tingle_statues: Buffer = Buffer.alloc(0x1);
   songs: Buffer = Buffer.alloc(0x1);
 }
 
