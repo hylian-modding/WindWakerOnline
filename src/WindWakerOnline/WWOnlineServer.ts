@@ -7,11 +7,11 @@ import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { IPacketHeader, LobbyData, ServerNetworkHandler } from "modloader64_api/NetworkHandler";
 import { Preinit } from "modloader64_api/PluginLifecycle";
 import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
-import { WWO_ScenePacket, WWO_DownloadRequestPacket, WWO_DownloadResponsePacket, WWO_UpdateSaveDataPacket, WWO_ErrorPacket, WWO_ClientFlagUpdate, WWO_ServerFlagUpdate, WWO_RoomPacket } from "./network/WWOPackets";
+import { WWO_ScenePacket, WWO_DownloadRequestPacket, WWO_DownloadResponsePacket, WWO_UpdateSaveDataPacket, WWO_ErrorPacket, WWO_ClientFlagUpdate, WWO_ServerFlagUpdate, WWO_RoomPacket, WWO_BottleUpdatePacket } from "./network/WWOPackets";
 import { WWOSaveData } from "./save/WWOnlineSaveData";
 import { WWOnlineStorage, WWOnlineSave_Server } from "./storage/WWOnlineStorage";
 import WWSerialize from "./storage/WWSerialize";
-import { IWWCore } from "WindWaker/API/WWAPI";
+import { InventoryItem, IWWCore } from "WindWaker/API/WWAPI";
 
 export default class WWOnlineServer {
 
@@ -178,6 +178,33 @@ export default class WWOnlineServer {
                 let resp = new WWO_DownloadResponsePacket(packet.lobby, true);
                 this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
             });
+        }
+    }
+
+    @ServerNetworkHandler('WWO_BottleUpdatePacket')
+    onBottle_server(packet: WWO_BottleUpdatePacket) {
+        let storage: WWOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+            packet.lobby,
+            this.parent
+        ) as WWOnlineStorage;
+        if (storage === null) {
+            return;
+        }
+        let world = storage.worlds[packet.player.data.world];
+        if (packet.contents === InventoryItem.NONE) return;
+        switch (packet.slot) {
+            case 0:
+                world.save.inventory.FIELD_BOTTLE1 = packet.contents;
+                break;
+            case 1:
+                world.save.inventory.FIELD_BOTTLE2 = packet.contents;
+                break;
+            case 2:
+                world.save.inventory.FIELD_BOTTLE3 = packet.contents;
+                break;
+            case 3:
+                world.save.inventory.FIELD_BOTTLE4 = packet.contents;
+                break;
         }
     }
 

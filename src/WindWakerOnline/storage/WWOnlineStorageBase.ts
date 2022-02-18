@@ -13,20 +13,25 @@ export class WWOnlineStorageBase {
 export class QuestStorageBase implements IQuestStatus {
   constructor() { }
   hasTunic: boolean = false;
+  windsRequiem: boolean = false;
+  balladGales: boolean = false;
+  commandMelody: boolean = false;
+  earthLyric: boolean = false;
+  windAria: boolean = false;
+  songPassing: boolean = false;
   current_hp: number = 0;
   current_mp: number = 0;
   max_hp: number = 0;
   max_mp: number = 0;
+  bracelet: number = 0;
   heart_containers: number = 0xC;
   swordEquip: number = 0xFF;
   shieldEquip: number = 0xFF;
   braceletEquip: number = 0xFF;
   swordLevel: Buffer = Buffer.alloc(0x1);
   shieldLevel: Buffer = Buffer.alloc(0x1);
-  songs: Buffer = Buffer.alloc(0x1);
   triforce: Buffer = Buffer.alloc(0x1);
   pearls: Buffer = Buffer.alloc(0x1);
-  bracelet: Buffer = Buffer.alloc(0x1);
   pirate_charm: Buffer = Buffer.alloc(0x1);
   hero_charm: Buffer = Buffer.alloc(0x1);
   owned_charts: Buffer = Buffer.alloc(0xF);
@@ -34,6 +39,7 @@ export class QuestStorageBase implements IQuestStatus {
   completed_charts: Buffer = Buffer.alloc(0xF);
   sectors: Buffer = Buffer.alloc(0x30);
   deciphered_triforce: Buffer = Buffer.alloc(0x1);
+  songs: Buffer = Buffer.alloc(0x1);
 }
 
 export class InventoryStorageBase implements IInventoryFields {

@@ -102,7 +102,7 @@ export default class WWOnlineClient {
         }
     }
 
-    updateFlags() {
+    /* updateFlags() {
 
         Object.keys(this.core.save.questStatus).forEach((key: string) => {
             if (Buffer.isBuffer(this.core.save.questStatus[key])) {
@@ -134,7 +134,7 @@ export default class WWOnlineClient {
             this.clientStorage.inventoryStorage.count_delivery,
             this.clientStorage.inventoryStorage.count_bait,
             this.ModLoader.clientLobby));
-    }
+    } */
 
     updateBottles(onlyfillCache = false) {
         let bottles: InventoryItem[] = [
@@ -216,7 +216,7 @@ export default class WWOnlineClient {
         if (this.core.helper.isSceneNameValid()) {
             this.ModLoader.gui.setDiscordStatus(
                 new DiscordStatus(
-                    'Playing WindWakerOnline',
+                    'Playing WWOnline',
                     'In ' +
                     this.clientStorage.localization[
                     scene
@@ -227,17 +227,19 @@ export default class WWOnlineClient {
     }
 
     @EventHandler(WWEvents.ON_ROOM_CHANGE)
-    onRoomChange(scene: string, room: number){
+    onRoomChange(scene: string, room: number) {
         //Log when the player changes to a different island
-        if(scene === "sea" && room !== 0){
-            this.ModLoader.clientSide.sendPacket(
-                new WWO_RoomPacket(
-                    this.ModLoader.clientLobby,
-                    scene,
-                    room
-                )
-            );
-            this.ModLoader.logger.info('client: I moved to ' + (this.clientStorage.localization_island[room] || room) + '.');
+        if (scene === "sea") {
+            if (room !== 0 && room !== 0xFF) {
+                this.ModLoader.clientSide.sendPacket(
+                    new WWO_RoomPacket(
+                        this.ModLoader.clientLobby,
+                        scene,
+                        room
+                    )
+                );
+                this.ModLoader.logger.info('client: I moved to ' + (this.clientStorage.localization_island[room] || room) + '.');
+            }
         }
     }
 
@@ -260,7 +262,7 @@ export default class WWOnlineClient {
 
     @NetworkHandler('WWO_RoomPacket')
     onRoomChange_client(packet: WWO_RoomPacket) {
-        if(packet.scene === "sea" && packet.room !== 0){
+        if (packet.scene === "sea" && packet.room !== 0) {
             this.ModLoader.logger.info(
                 'client receive: Player ' +
                 packet.player.nickname +
@@ -300,7 +302,6 @@ export default class WWOnlineClient {
             return;
         }
         if (packet.player.data.world !== this.clientStorage.world) return;
-        if (!this.config.syncBottleContents) return;
         let inventory = this.core.save.inventory;
         if (packet.contents === InventoryItem.NONE) return;
         this.clientStorage.bottleCache[packet.slot] = packet.contents;
@@ -445,6 +446,6 @@ export default class WWOnlineClient {
 
     inventoryUpdateTick() {
         this.updateInventory();
-        this.updateFlags();
+        //this.updateFlags();
     }
 }

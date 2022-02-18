@@ -5,7 +5,7 @@ import { bus } from "modloader64_api/EventHandler";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { ISaveSyncData } from "../save/ISaveSyncData";
-import { IWWCore } from 'WindWaker/API/WWAPI'
+import { InventoryItem, IWWCore } from 'WindWaker/API/WWAPI'
 import WWSerialize from "../storage/WWSerialize";
 import fs from 'fs';
 import { parseFlagChanges } from "./parseFlagChanges";
@@ -110,14 +110,37 @@ export class WWOSaveData implements ISaveSyncData {
       storage.questStatus.max_hp = obj.questStatus.max_hp;
       storage.questStatus.max_mp = obj.questStatus.max_mp;
 
-      this.processMixedLoop_OVERWRITE(obj.inventory, storage.inventory, ["FIELD_BOTTLE1", "FIELD_BOTTLE2", "FIELD_BOTTLE3", "FIELD_BOTTLE4"]);
+      this.processMixedLoop_OVERWRITE(obj.inventory, storage.inventory, []);
 
-      //Quest Status Screen Flags
-      Object.keys(storage.questStatus).forEach((key: string) => {
-        if (Buffer.isBuffer(obj.questStatus[key])) {
-          storage.questStatus[key] = obj.questStatus[key];
-        }
-      })
+      storage.inventory.spoils_slots = obj.inventory.spoils_slots;
+      storage.inventory.bait_slots = obj.inventory.bait_slots;
+      storage.inventory.delivery_slots = obj.inventory.delivery_slots;
+      storage.inventory.owned_delivery = obj.inventory.owned_delivery;
+      storage.inventory.owned_spoils = obj.inventory.owned_spoils;
+      storage.inventory.owned_bait = obj.inventory.owned_bait;
+      storage.inventory.count_spoils = obj.inventory.count_spoils;
+      storage.inventory.count_delivery = obj.inventory.count_delivery;
+      storage.inventory.count_bait = obj.inventory.count_bait;
+
+      this.processMixedLoop_OVERWRITE(obj.questStatus, storage.questStatus, [])
+
+      storage.questStatus.songs = obj.questStatus.songs;
+      storage.questStatus.swordEquip = obj.questStatus.swordEquip;
+      storage.questStatus.shieldEquip = obj.questStatus.shieldEquip;
+      storage.questStatus.swordLevel = obj.questStatus.swordLevel;
+      storage.questStatus.shieldLevel = obj.questStatus.shieldLevel;
+      storage.questStatus.bracelet = obj.questStatus.bracelet;
+      storage.questStatus.braceletEquip = obj.questStatus.braceletEquip;
+
+      storage.questStatus.hero_charm = obj.questStatus.hero_charm;
+      storage.questStatus.triforce = obj.questStatus.triforce;
+      storage.questStatus.pearls = obj.questStatus.pearls;
+      storage.questStatus.pirate_charm = obj.questStatus.pirate_charm;
+      storage.questStatus.owned_charts = obj.questStatus.owned_charts;
+      storage.questStatus.opened_charts = obj.questStatus.opened_charts;
+      storage.questStatus.completed_charts = obj.questStatus.completed_charts;
+      storage.questStatus.sectors = obj.questStatus.sectors;
+      storage.questStatus.deciphered_triforce = obj.questStatus.deciphered_triforce;
 
     } catch (err: any) {
       console.log(err.stack);
@@ -140,27 +163,160 @@ export class WWOSaveData implements ISaveSyncData {
           bus.emit(WWOEvents.MAGIC_METER_INCREASED, storage.questStatus.max_mp);
         }
 
+        //Inventory 
         this.processMixedLoop(obj.inventory, storage.inventory, ["FIELD_BOTTLE1", "FIELD_BOTTLE2", "FIELD_BOTTLE3", "FIELD_BOTTLE4"]);
 
+        let spoils_slots = storage.inventory.spoils_slots;
+        let bait_slots = storage.inventory.bait_slots;
+        let delivery_slots = storage.inventory.delivery_slots;
+        let owned_delivery = storage.inventory.owned_delivery;
+        let owned_spoils = storage.inventory.owned_spoils;
+        let owned_bait = storage.inventory.owned_bait;
+        let count_spoils = storage.inventory.count_spoils;
+        let count_delivery = storage.inventory.count_delivery;
+        let count_bait = storage.inventory.count_bait;
+
+        parseFlagChanges(obj.inventory.owned_delivery, owned_delivery);
+        parseFlagChanges(obj.inventory.owned_spoils, owned_spoils);
+        parseFlagChanges(obj.inventory.owned_bait, owned_bait);
+
+        storage.inventory.owned_delivery = owned_delivery;
+        storage.inventory.owned_spoils = owned_spoils;
+        storage.inventory.owned_bait = owned_bait;
+
+        for (let i = 0; i < spoils_slots.byteLength; i++) {
+          let incomingCount = obj.inventory.spoils_slots.readUInt8(i);
+          let storageCount = storage.inventory.spoils_slots.readUInt8(i);
+          let buf = storage.inventory.spoils_slots
+          if (incomingCount !== storageCount) storageCount = incomingCount;
+          buf.writeUInt8(storageCount, i);
+          storage.inventory.spoils_slots = buf;
+        }
+        for (let i = 0; i < bait_slots.byteLength; i++) {
+          let incomingCount = obj.inventory.bait_slots.readUInt8(i);
+          let storageCount = storage.inventory.bait_slots.readUInt8(i);
+          let buf = storage.inventory.bait_slots
+          if (incomingCount !== storageCount) storageCount = incomingCount;
+          buf.writeUInt8(storageCount, i);
+          storage.inventory.bait_slots = buf;
+        }
+        for (let i = 0; i < delivery_slots.byteLength; i++) {
+          let incomingCount = obj.inventory.delivery_slots.readUInt8(i);
+          let storageCount = storage.inventory.delivery_slots.readUInt8(i);
+          let buf = storage.inventory.delivery_slots
+          if (incomingCount !== storageCount) storageCount = incomingCount;
+          buf.writeUInt8(storageCount, i);
+          storage.inventory.delivery_slots = buf;
+        }
+
+        for (let i = 0; i < count_spoils.byteLength; i++) {
+          let incomingCount = obj.inventory.count_spoils.readUInt8(i);
+          let storageCount = storage.inventory.count_spoils.readUInt8(i);
+          let buf = storage.inventory.count_spoils
+          if (incomingCount !== storageCount) storageCount = incomingCount;
+          buf.writeUInt8(storageCount, i);
+          storage.inventory.count_spoils = buf;
+        }
+        for (let i = 0; i < count_delivery.byteLength; i++) {
+          let incomingCount = obj.inventory.count_delivery.readUInt8(i);
+          let storageCount = storage.inventory.count_delivery.readUInt8(i);
+          let buf = storage.inventory.count_delivery
+          if (incomingCount !== storageCount) storageCount = incomingCount;
+          buf.writeUInt8(storageCount, i);
+          storage.inventory.count_delivery = buf;
+        }
+        for (let i = 0; i < count_bait.byteLength; i++) {
+          let incomingCount = obj.inventory.count_bait.readUInt8(i);
+          let storageCount = storage.inventory.count_bait.readUInt8(i);
+          let buf = storage.inventory.count_bait
+          if (incomingCount !== storageCount) storageCount = incomingCount;
+          buf.writeUInt8(storageCount, i);
+          storage.inventory.count_bait = buf;
+        }
+
         //Quest Status Screen Flags
-        Object.keys(storage.questStatus).forEach((key: string) => {
-          if (Buffer.isBuffer(obj.questStatus[key])) {
-            this.ModLoader.utils.clearBuffer(storage.questStatus[key]);
-            parseFlagChanges(obj.questStatus[key], storage.questStatus[key]);
-            storage.questStatus[key] = obj.questStatus[key];
-          }
-        })
+        this.processMixedLoop(obj.questStatus, storage.questStatus, ["balladGales", "commandMelody", "windAria", "earthLyric", "songPassing", "windsRequiem"]);
 
-          //Should only update equip if incoming is not "empty"(0xFF, 0x0) or is greater than current equip
-  //Hopefully prevents downgrading?
-  if (storage.questStatus.swordEquip === 0xFF && obj.questStatus.swordEquip < storage.questStatus.swordEquip) storage.questStatus.swordEquip = obj.questStatus.swordEquip;
-  else if (obj.questStatus.swordEquip !== 0xFF && obj.questStatus.swordEquip > storage.questStatus.swordEquip) storage.questStatus.swordEquip = obj.questStatus.swordEquip;
+        let swordLevel = storage.questStatus.swordLevel;
+        let shieldLevel = storage.questStatus.shieldLevel;
+        let triforce = storage.questStatus.triforce;
+        let pearls = storage.questStatus.pearls;
+        let songs = storage.questStatus.songs;
+        let pirate_charm = storage.questStatus.pirate_charm;
+        let hero_charm = storage.questStatus.hero_charm;
+        let owned_charts = storage.questStatus.owned_charts;
+        let opened_charts = storage.questStatus.opened_charts;
+        let completed_charts = storage.questStatus.completed_charts;
+        let sectors = storage.questStatus.sectors;
+        let deciphered_triforce = storage.questStatus.deciphered_triforce;
 
-  if (storage.questStatus.shieldEquip === 0xFF && obj.questStatus.shieldEquip < storage.questStatus.braceletEquip) storage.questStatus.shieldEquip = obj.questStatus.shieldEquip;
-  else if (obj.questStatus.shieldEquip !== 0xFF && obj.questStatus.shieldEquip > storage.questStatus.shieldEquip) storage.questStatus.shieldEquip = obj.questStatus.shieldEquip;
+        parseFlagChanges(obj.questStatus.swordLevel, swordLevel);
+        parseFlagChanges(obj.questStatus.shieldLevel, shieldLevel);
+        parseFlagChanges(obj.questStatus.songs, songs);
+        parseFlagChanges(obj.questStatus.hero_charm, hero_charm);
+        parseFlagChanges(obj.questStatus.triforce, triforce);
+        parseFlagChanges(obj.questStatus.pearls, pearls);
+        parseFlagChanges(obj.questStatus.pirate_charm, pirate_charm);
+        parseFlagChanges(obj.questStatus.owned_charts, owned_charts);
+        parseFlagChanges(obj.questStatus.opened_charts, opened_charts);
+        parseFlagChanges(obj.questStatus.completed_charts, completed_charts);
+        parseFlagChanges(obj.questStatus.sectors, sectors);
+        parseFlagChanges(obj.questStatus.deciphered_triforce, deciphered_triforce);
 
-  if (storage.questStatus.braceletEquip === 0xFF && obj.questStatus.braceletEquip < storage.questStatus.braceletEquip) storage.questStatus.braceletEquip = obj.questStatus.braceletEquip;
-  else if (obj.questStatus.braceletEquip !== 0xFF && obj.questStatus.braceletEquip > storage.questStatus.braceletEquip) storage.questStatus.braceletEquip = obj.questStatus.braceletEquip;
+        storage.questStatus.triforce = triforce;
+        storage.questStatus.pearls = pearls;
+        storage.questStatus.songs = songs;
+        storage.questStatus.pirate_charm = pirate_charm;
+        storage.questStatus.hero_charm = hero_charm;
+        storage.questStatus.owned_charts = owned_charts;
+        storage.questStatus.opened_charts = opened_charts;
+        storage.questStatus.completed_charts = completed_charts;
+        storage.questStatus.sectors = sectors;
+        storage.questStatus.deciphered_triforce = deciphered_triforce;
+
+        //Equipment
+        if (storage.questStatus.swordEquip === 0xFF && obj.questStatus.swordEquip < storage.questStatus.swordEquip) {
+          storage.questStatus.swordLevel = swordLevel;
+          storage.questStatus.swordEquip = obj.questStatus.swordEquip;
+        }
+        else if (obj.questStatus.swordEquip !== 0xFF && obj.questStatus.swordEquip > storage.questStatus.swordEquip) {
+          storage.questStatus.swordLevel = swordLevel;
+          storage.questStatus.swordEquip = obj.questStatus.swordEquip;
+        }
+
+        if (storage.questStatus.shieldEquip === 0xFF && obj.questStatus.shieldEquip < storage.questStatus.braceletEquip) {
+          storage.questStatus.shieldLevel = shieldLevel;
+          storage.questStatus.shieldEquip = obj.questStatus.shieldEquip;
+        }
+        else if (obj.questStatus.shieldEquip !== 0xFF && obj.questStatus.shieldEquip > storage.questStatus.shieldEquip) {
+          storage.questStatus.shieldLevel = shieldLevel;
+          storage.questStatus.shieldEquip = obj.questStatus.shieldEquip;
+        }
+        if (storage.questStatus.braceletEquip === 0xFF && obj.questStatus.braceletEquip < storage.questStatus.braceletEquip) {
+          storage.questStatus.bracelet = obj.questStatus.bracelet
+          storage.questStatus.braceletEquip = obj.questStatus.braceletEquip;
+        }
+        else if (obj.questStatus.braceletEquip !== 0xFF && obj.questStatus.braceletEquip > storage.questStatus.braceletEquip) {
+          storage.questStatus.bracelet = obj.questStatus.bracelet;
+          storage.questStatus.braceletEquip = obj.questStatus.braceletEquip;
+        }
+
+        //Initial bottles
+        if (obj.inventory.FIELD_BOTTLE1 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE1 === InventoryItem.NONE) {
+          storage.inventory.FIELD_BOTTLE1 = obj.inventory.FIELD_BOTTLE1;
+        }
+
+        if (obj.inventory.FIELD_BOTTLE2 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE2 === InventoryItem.NONE) {
+          storage.inventory.FIELD_BOTTLE2 = obj.inventory.FIELD_BOTTLE2;
+        }
+
+        if (obj.inventory.FIELD_BOTTLE3 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE3 === InventoryItem.NONE) {
+          storage.inventory.FIELD_BOTTLE3 = obj.inventory.FIELD_BOTTLE3;
+        }
+
+        if (obj.inventory.FIELD_BOTTLE4 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE4 === InventoryItem.NONE) {
+          storage.inventory.FIELD_BOTTLE4 = obj.inventory.FIELD_BOTTLE4;
+        }
 
         accept(true);
       }).catch((err: string) => {
