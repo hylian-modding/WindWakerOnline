@@ -8,7 +8,7 @@ import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { INetworkPlayer, LobbyData, NetworkHandler } from "modloader64_api/NetworkHandler";
 import { Preinit, Init, Postinit, onTick } from "modloader64_api/PluginLifecycle";
 import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
-import { WWO_UpdateSaveDataPacket, WWO_DownloadRequestPacket, WWO_ScenePacket, WWO_SceneRequestPacket, WWO_DownloadResponsePacket, WWO_BottleUpdatePacket, WWO_ErrorPacket, WWO_ClientFlagUpdate, WWO_ServerFlagUpdate, WWO_RoomPacket } from "./network/WWOPackets";
+import { WWO_UpdateSaveDataPacket, WWO_DownloadRequestPacket, WWO_ScenePacket, WWO_SceneRequestPacket, WWO_DownloadResponsePacket, WWO_BottleUpdatePacket, WWO_ErrorPacket, WWO_ClientFlagUpdate, WWO_ServerFlagUpdate, WWO_RoomPacket, WWO_RupeePacket } from "./network/WWOPackets";
 import { IWWOnlineLobbyConfig, WWOnlineConfigCategory } from "./WWOnline";
 import { WWOSaveData } from "./save/WWOnlineSaveData";
 import { WWOnlineStorage } from "./storage/WWOnlineStorage";
@@ -43,8 +43,9 @@ export default class WWOnlineClient {
     synctimerMax: number = 60 * 20;
     syncPending: boolean = false;
 
-    lastMagicValue: number = 0xFF;
-
+    lastRupees: number = 0;
+    sentRupees: boolean = false;
+    
     @EventHandler(EventsClient.ON_PLAYER_JOIN)
     onPlayerJoined(player: INetworkPlayer) {
         this.clientStorage.players[player.uuid] = "-1";
@@ -90,7 +91,7 @@ export default class WWOnlineClient {
         if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNameValid() || this.core.helper.isPaused() || !this.clientStorage.first_time_sync) return;
         if (this.syncTimer > this.synctimerMax) {
             this.clientStorage.lastPushHash = this.ModLoader.utils.hashBuffer(Buffer.from("RESET"));
-            this.ModLoader.logger.debug("Forcing resync due to timeout.");
+            //this.ModLoader.logger.debug("Forcing resync due to timeout.");
         }
         let save = this.clientStorage.saveManager.createSave();
         if (this.clientStorage.lastPushHash !== this.clientStorage.saveManager.hash) {
@@ -101,6 +102,16 @@ export default class WWOnlineClient {
             this.syncTimer = 0;
         }
     }
+
+    /* updateRupees() {
+        let rupees = this.core.save.inventory.rupeeCount;
+        if (rupees !== this.lastRupees && !this.sentRupees) {
+            this.ModLoader.logger.info(`Rupees changed with delta ` + (rupees - this.lastRupees).toString());
+            this.ModLoader.clientSide.sendPacket(new WWO_RupeePacket(rupees - this.lastRupees, this.ModLoader.clientLobby))
+            this.sentRupees = true;
+        }
+        this.lastRupees = rupees;
+    } */
 
     /* updateFlags() {
 
@@ -331,42 +342,30 @@ export default class WWOnlineClient {
 
     healPlayer() {
         if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNameValid()) return;
-        this.core.ModLoader.emulator.rdramWriteF32(0x803CA764, 80);
-    }
-
-    refreshMagic() {
-        if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNameValid()) return;
-
-        this.lastMagicValue = this.core.save.questStatus.current_mp;
-
-        if (this.core.save.questStatus.current_mp === 0x20 || this.core.save.questStatus.current_mp === 0x10) {
-            this.core.save.questStatus.current_mp -= 1;
-        }
-        else {
-            this.core.save.questStatus.current_mp += 1;
-        }
+        this.core.ModLoader.emulator.rdramWriteF32(0x803CA764, 80); //Number of quarter hearts to add to the player's HP this frame. Can be negative to damage the player.
     }
 
     @EventHandler(WWOEvents.GAINED_PIECE_OF_HEART)
     onNeedsHeal(evt: any) {
         this.healPlayer();
-        this.refreshMagic();
     }
 
     @EventHandler(WWOEvents.MAGIC_METER_INCREASED)
-    onNeedsMagic(size: API.Magic) {
+    onNeedsMagic(size: API.MagicQuantities) {
         switch (size) {
-            case API.Magic.NONE:
-                this.core.save.questStatus.current_mp = API.MagicQuantities.NONE;
+            case API.MagicQuantities.NONE:
+                console.log("Magic Meter NONE")
+                this.core.save.questStatus.current_mp += API.MagicQuantities.NONE;
                 break;
-            case API.Magic.NORMAL:
-                this.core.save.questStatus.current_mp = API.MagicQuantities.NORMAL;
+            case API.MagicQuantities.NORMAL:
+                console.log("Magic Meter NORMAL")
+                this.core.save.questStatus.current_mp += API.MagicQuantities.NORMAL;
                 break;
-            case API.Magic.EXTENDED:
-                this.core.save.questStatus.current_mp = API.MagicQuantities.EXTENDED;
+            case API.MagicQuantities.EXTENDED:
+                console.log("Magic Meter Extended")
+                this.core.save.questStatus.current_mp += API.MagicQuantities.EXTENDED;
                 break;
         }
-        this.refreshMagic();
     }
 
     // The server is giving me data.
@@ -416,6 +415,19 @@ export default class WWOnlineClient {
         this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
     }
 
+    /* @NetworkHandler('WWO_RupeePacket')
+    onRupees(packet: WWO_RupeePacket) {
+        if (!this.sentRupees) {
+            this.core.save.inventory.rupeeCount += packet.delta;
+            console.log(`onRupees: ${packet.delta}, rupeeCount: ${this.core.save.inventory.rupeeCount}`)
+        }
+        else { 
+            console.log(`I sent these! Refusing...`);
+            this.sentRupees = false;
+        }
+        this.lastRupees = this.core.save.inventory.rupeeCount;
+    } */
+
     @NetworkHandler('WWO_ErrorPacket')
     onError(packet: WWO_ErrorPacket) {
         this.ModLoader.logger.error(packet.message);
@@ -434,11 +446,8 @@ export default class WWOnlineClient {
                 }
                 if (this.LobbyConfig.data_syncing) {
                     this.updateBottles();
+                    //this.updateRupees();
                     this.syncTimer++;
-                }
-                if (this.lastMagicValue != 0xFF) {
-                    this.core.save.questStatus.current_mp = this.lastMagicValue;
-                    this.lastMagicValue = 0xFF;
                 }
             }
         }

@@ -7,7 +7,7 @@ import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { IPacketHeader, LobbyData, ServerNetworkHandler } from "modloader64_api/NetworkHandler";
 import { Preinit } from "modloader64_api/PluginLifecycle";
 import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
-import { WWO_ScenePacket, WWO_DownloadRequestPacket, WWO_DownloadResponsePacket, WWO_UpdateSaveDataPacket, WWO_ErrorPacket, WWO_ClientFlagUpdate, WWO_ServerFlagUpdate, WWO_RoomPacket, WWO_BottleUpdatePacket } from "./network/WWOPackets";
+import { WWO_ScenePacket, WWO_DownloadRequestPacket, WWO_DownloadResponsePacket, WWO_UpdateSaveDataPacket, WWO_ErrorPacket, WWO_ClientFlagUpdate, WWO_ServerFlagUpdate, WWO_RoomPacket, WWO_BottleUpdatePacket, WWO_RupeePacket } from "./network/WWOPackets";
 import { WWOSaveData } from "./save/WWOnlineSaveData";
 import { WWOnlineStorage, WWOnlineSave_Server } from "./storage/WWOnlineStorage";
 import WWSerialize from "./storage/WWSerialize";
@@ -208,6 +208,28 @@ export default class WWOnlineServer {
         }
     }
 
+    /* @ServerNetworkHandler('WWO_RupeePacket')
+    onRupees(packet: WWO_RupeePacket) {
+        let storage: WWOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+            packet.lobby,
+            this.parent
+        ) as WWOnlineStorage;
+        if (storage === null) {
+            return;
+        }
+
+        this.ModLoader.logger.info(`Server: Got Rupees with Delta ${packet.delta}`);
+
+        let lastRupees = storage.inventoryStorage.rupeeCount;
+
+        storage.inventoryStorage.rupeeCount += packet.delta;
+
+        if (storage.inventoryStorage.rupeeCount < 0) storage.inventoryStorage.rupeeCount = 0;
+        if (storage.inventoryStorage.rupeeCount > 5000) storage.inventoryStorage.rupeeCount = 5000;
+        
+        if (storage.inventoryStorage.rupeeCount - lastRupees !== 0) this.ModLoader.serverSide.sendPacket(new WWO_RupeePacket(packet.delta, packet.lobby));
+
+    } */
     //------------------------------
     // Flag Syncing
     //------------------------------

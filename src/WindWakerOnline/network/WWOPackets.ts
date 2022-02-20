@@ -21,9 +21,8 @@ export class WWO_BottleUpdatePacket extends Packet {
 
 export class WWO_RupeePacket extends PacketWithTimeStamp {
   delta: number;
-
   constructor(delta: number, lobby: string){
-    super('WWO_RingPacket', 'WWOnline', lobby, true);
+    super('WWO_RupeePacket', 'WWOnline', lobby, false);
     this.delta = delta;
   }
 }

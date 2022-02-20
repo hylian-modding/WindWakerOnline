@@ -110,7 +110,7 @@ export class WWOSaveData implements ISaveSyncData {
       storage.questStatus.max_hp = obj.questStatus.max_hp;
       storage.questStatus.max_mp = obj.questStatus.max_mp;
 
-      this.processMixedLoop_OVERWRITE(obj.inventory, storage.inventory, []);
+      this.processMixedLoop_OVERWRITE(obj.inventory, storage.inventory, ["rupeeCount"]);
 
       storage.inventory.spoils_slots = obj.inventory.spoils_slots;
       storage.inventory.bait_slots = obj.inventory.bait_slots;
@@ -122,7 +122,7 @@ export class WWOSaveData implements ISaveSyncData {
       storage.inventory.count_delivery = obj.inventory.count_delivery;
       storage.inventory.count_bait = obj.inventory.count_bait;
 
-      this.processMixedLoop_OVERWRITE(obj.questStatus, storage.questStatus, [])
+      this.processMixedLoop_OVERWRITE(obj.questStatus, storage.questStatus, ["max_mp", "max_hp"])
 
       storage.questStatus.songs = obj.questStatus.songs;
       storage.questStatus.swordEquip = obj.questStatus.swordEquip;
@@ -141,6 +141,14 @@ export class WWOSaveData implements ISaveSyncData {
       storage.questStatus.completed_charts = obj.questStatus.completed_charts;
       storage.questStatus.sectors = obj.questStatus.sectors;
       storage.questStatus.deciphered_triforce = obj.questStatus.deciphered_triforce;
+
+      storage.inventory.FIELD_BOTTLE1 = obj.inventory.FIELD_BOTTLE1;
+      storage.inventory.FIELD_BOTTLE2 = obj.inventory.FIELD_BOTTLE2;
+      storage.inventory.FIELD_BOTTLE3 = obj.inventory.FIELD_BOTTLE3;
+      storage.inventory.FIELD_BOTTLE4 = obj.inventory.FIELD_BOTTLE4;
+
+      storage.inventory.FIELD_BOW = obj.inventory.FIELD_BOW;
+      storage.inventory.FIELD_PICTO_BOX = obj.inventory.FIELD_PICTO_BOX;
 
     } catch (err: any) {
       console.log(err.stack);
@@ -164,7 +172,7 @@ export class WWOSaveData implements ISaveSyncData {
         }
 
         //Inventory 
-        this.processMixedLoop(obj.inventory, storage.inventory, ["FIELD_BOTTLE1", "FIELD_BOTTLE2", "FIELD_BOTTLE3", "FIELD_BOTTLE4"]);
+        this.processMixedLoop(obj.inventory, storage.inventory, ["rupeeCount"]);
 
         let spoils_slots = storage.inventory.spoils_slots;
         let bait_slots = storage.inventory.bait_slots;
@@ -175,14 +183,17 @@ export class WWOSaveData implements ISaveSyncData {
         let count_spoils = storage.inventory.count_spoils;
         let count_delivery = storage.inventory.count_delivery;
         let count_bait = storage.inventory.count_bait;
+        let owned_items = storage.inventory.owned_items;
 
         parseFlagChanges(obj.inventory.owned_delivery, owned_delivery);
         parseFlagChanges(obj.inventory.owned_spoils, owned_spoils);
         parseFlagChanges(obj.inventory.owned_bait, owned_bait);
+        parseFlagChanges(obj.inventory.owned_items, owned_items);
 
         storage.inventory.owned_delivery = owned_delivery;
         storage.inventory.owned_spoils = owned_spoils;
         storage.inventory.owned_bait = owned_bait;
+        storage.inventory.owned_items = owned_items;
 
         for (let i = 0; i < spoils_slots.byteLength; i++) {
           let incomingCount = obj.inventory.spoils_slots.readUInt8(i);
@@ -235,7 +246,7 @@ export class WWOSaveData implements ISaveSyncData {
         }
 
         //Quest Status Screen Flags
-        this.processMixedLoop(obj.questStatus, storage.questStatus, []);
+        this.processMixedLoop(obj.questStatus, storage.questStatus, ["max_hp", "max_mp"]);
 
         let swordLevel = storage.questStatus.swordLevel;
         let shieldLevel = storage.questStatus.shieldLevel;
@@ -250,7 +261,7 @@ export class WWOSaveData implements ISaveSyncData {
         let sectors = storage.questStatus.sectors;
         let deciphered_triforce = storage.questStatus.deciphered_triforce;
         let tingle_statues = storage.questStatus.tingle_statues;
-        
+
         parseFlagChanges(obj.questStatus.swordLevel, swordLevel);
         parseFlagChanges(obj.questStatus.shieldLevel, shieldLevel);
         parseFlagChanges(obj.questStatus.songs, songs);
@@ -304,7 +315,7 @@ export class WWOSaveData implements ISaveSyncData {
           storage.questStatus.braceletEquip = obj.questStatus.braceletEquip;
         }
 
-        //Initial bottles
+        //bottles
         if (obj.inventory.FIELD_BOTTLE1 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE1 === InventoryItem.NONE) {
           storage.inventory.FIELD_BOTTLE1 = obj.inventory.FIELD_BOTTLE1;
         }
@@ -319,6 +330,15 @@ export class WWOSaveData implements ISaveSyncData {
 
         if (obj.inventory.FIELD_BOTTLE4 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE4 === InventoryItem.NONE) {
           storage.inventory.FIELD_BOTTLE4 = obj.inventory.FIELD_BOTTLE4;
+        }
+
+        // Different Bow versions
+        if (obj.inventory.FIELD_BOW === InventoryItem.BOW || obj.inventory.FIELD_BOW === InventoryItem.FI_BOW || obj.inventory.FIELD_BOW === InventoryItem.LIGHT_BOW) {
+          storage.inventory.FIELD_BOW = obj.inventory.FIELD_BOW;
+        }
+        //Different Picto Box versions
+        if (obj.inventory.FIELD_PICTO_BOX === InventoryItem.PICTO_BOX || obj.inventory.FIELD_PICTO_BOX === InventoryItem.DELUXE_PICTO_BOX) {
+          storage.inventory.FIELD_PICTO_BOX = obj.inventory.FIELD_PICTO_BOX;
         }
 
         accept(true);

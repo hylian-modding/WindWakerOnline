@@ -53,11 +53,11 @@ export class InventoryStorageBase implements IInventoryFields {
   FIELD_BOOMERANG: boolean = false;
   FIELD_DEKU_LEAF: boolean = false;
   FIELD_TINGLE_TUNER: boolean = false;
-  FIELD_PICTO_BOX: boolean = false;
+  FIELD_PICTO_BOX: API.InventoryItem = API.InventoryItem.NONE;
   FIELD_IRON_BOOTS: boolean = false;
   FIELD_MAGIC_ARMOR: boolean = false;
   FIELD_BAIT_BAG: boolean = false;
-  FIELD_BOW: boolean = false;
+  FIELD_BOW: API.InventoryItem = API.InventoryItem.NONE;
   FIELD_BOMBS: boolean = false;
   FIELD_BOTTLE1: API.InventoryItem = API.InventoryItem.BOTTLE_EMPTY;
   FIELD_BOTTLE2: API.InventoryItem = API.InventoryItem.BOTTLE_EMPTY;
@@ -75,6 +75,7 @@ export class InventoryStorageBase implements IInventoryFields {
   count_spoils: Buffer = Buffer.alloc(0x7);
   count_delivery: Buffer = Buffer.alloc(0x8);
   count_bait: Buffer = Buffer.alloc(0x7);
+  owned_items: Buffer = Buffer.alloc(0x14);
   rupeeCap: number = 0;
   bombCap: number = 0;
   arrowCap: number = 0;
