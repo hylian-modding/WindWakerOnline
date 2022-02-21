@@ -13,6 +13,7 @@ export class WWOnlineStorageBase {
 export class QuestStorageBase implements IQuestStatus {
   constructor() { }
   hasTunic: boolean = false;
+  hero_charm: boolean = false;
   windsRequiem: boolean = false;
   balladGales: boolean = false;
   commandMelody: boolean = false;
@@ -31,7 +32,6 @@ export class QuestStorageBase implements IQuestStatus {
   triforce: Buffer = Buffer.alloc(0x1);
   pearls: Buffer = Buffer.alloc(0x1);
   pirate_charm: Buffer = Buffer.alloc(0x1);
-  hero_charm: Buffer = Buffer.alloc(0x1);
   owned_charts: Buffer = Buffer.alloc(0xF);
   opened_charts: Buffer = Buffer.alloc(0xF);
   completed_charts: Buffer = Buffer.alloc(0xF);

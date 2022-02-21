@@ -129,8 +129,6 @@ export class WWOSaveData implements ISaveSyncData {
       storage.questStatus.songs = obj.questStatus.songs;
       storage.questStatus.bracelet = obj.questStatus.bracelet;
       storage.questStatus.braceletEquip = obj.questStatus.braceletEquip;
-
-      storage.questStatus.hero_charm = obj.questStatus.hero_charm;
       storage.questStatus.triforce = obj.questStatus.triforce;
       storage.questStatus.pearls = obj.questStatus.pearls;
       storage.questStatus.pirate_charm = obj.questStatus.pirate_charm;
@@ -256,7 +254,6 @@ export class WWOSaveData implements ISaveSyncData {
         let pearls = storage.questStatus.pearls;
         let songs = storage.questStatus.songs;
         let pirate_charm = storage.questStatus.pirate_charm;
-        let hero_charm = storage.questStatus.hero_charm;
         let owned_charts = storage.questStatus.owned_charts;
         let opened_charts = storage.questStatus.opened_charts;
         let completed_charts = storage.questStatus.completed_charts;
@@ -264,7 +261,6 @@ export class WWOSaveData implements ISaveSyncData {
         let deciphered_triforce = storage.questStatus.deciphered_triforce;
         let tingle_statues = storage.questStatus.tingle_statues;
 
-        //TODO: Fix Hero's Charm syncing the wearing bit
         parseFlagChanges(obj.questStatus.songs, songs);
         parseFlagChanges(obj.questStatus.triforce, triforce);
         parseFlagChanges(obj.questStatus.pearls, pearls);
@@ -288,18 +284,6 @@ export class WWOSaveData implements ISaveSyncData {
         storage.questStatus.deciphered_triforce = deciphered_triforce;
         storage.questStatus.tingle_statues = tingle_statues;
 
-        //Hero's Charm
-        for (let i = 0; i < hero_charm.byteLength; i++) {
-          if (i === 0) { //prevents setting "equipped" bit
-            let incomingCount = obj.questStatus.hero_charm.readUInt8(i);
-            let storageCount = storage.questStatus.hero_charm.readUInt8(i);
-            let buf = storage.questStatus.hero_charm
-            if (incomingCount !== storageCount) storageCount = incomingCount;
-            buf.writeUInt8(storageCount, i);
-            storage.questStatus.hero_charm = buf;
-          }
-        }
-        
         this.processMixedLoop(obj.swords, storage.swords, []);
         this.processMixedLoop(obj.shields, storage.shields, []);
 
