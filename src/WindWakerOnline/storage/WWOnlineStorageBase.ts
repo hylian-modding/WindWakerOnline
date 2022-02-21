@@ -28,8 +28,6 @@ export class QuestStorageBase implements IQuestStatus {
   swordEquip: number = 0xFF;
   shieldEquip: number = 0xFF;
   braceletEquip: number = 0xFF;
-  swordLevel: Buffer = Buffer.alloc(0x1);
-  shieldLevel: Buffer = Buffer.alloc(0x1);
   triforce: Buffer = Buffer.alloc(0x1);
   pearls: Buffer = Buffer.alloc(0x1);
   pirate_charm: Buffer = Buffer.alloc(0x1);

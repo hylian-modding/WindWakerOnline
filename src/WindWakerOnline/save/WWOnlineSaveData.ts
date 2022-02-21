@@ -5,7 +5,7 @@ import { bus } from "modloader64_api/EventHandler";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { ISaveSyncData } from "../save/ISaveSyncData";
-import { InventoryItem, IWWCore } from 'WindWaker/API/WWAPI'
+import { InventoryItem, IWWCore, Shield, Sword } from 'WindWaker/API/WWAPI'
 import WWSerialize from "../storage/WWSerialize";
 import fs from 'fs';
 import { parseFlagChanges } from "./parseFlagChanges";
@@ -25,7 +25,9 @@ export class WWOSaveData implements ISaveSyncData {
     let obj: any = {};
     let keys = [
       "inventory",
-      "questStatus"
+      "questStatus",
+      "swords",
+      "shields"
     ];
 
     obj = JSON.parse(JSON.stringify(this.core.save));
@@ -125,10 +127,6 @@ export class WWOSaveData implements ISaveSyncData {
       this.processMixedLoop_OVERWRITE(obj.questStatus, storage.questStatus, ["max_mp", "max_hp"])
 
       storage.questStatus.songs = obj.questStatus.songs;
-      storage.questStatus.swordEquip = obj.questStatus.swordEquip;
-      storage.questStatus.shieldEquip = obj.questStatus.shieldEquip;
-      storage.questStatus.swordLevel = obj.questStatus.swordLevel;
-      storage.questStatus.shieldLevel = obj.questStatus.shieldLevel;
       storage.questStatus.bracelet = obj.questStatus.bracelet;
       storage.questStatus.braceletEquip = obj.questStatus.braceletEquip;
 
@@ -149,6 +147,12 @@ export class WWOSaveData implements ISaveSyncData {
 
       storage.inventory.FIELD_BOW = obj.inventory.FIELD_BOW;
       storage.inventory.FIELD_PICTO_BOX = obj.inventory.FIELD_PICTO_BOX;
+
+      storage.swords.swordLevel = obj.swords.swordLevel;
+      storage.shields.shieldLevel = obj.shields.shieldLevel;
+
+      this.processMixedLoop_OVERWRITE(obj.swords, storage.swords, []);
+      this.processMixedLoop_OVERWRITE(obj.shields, storage.shields, []);
 
     } catch (err: any) {
       console.log(err.stack);
@@ -246,10 +250,8 @@ export class WWOSaveData implements ISaveSyncData {
         }
 
         //Quest Status Screen Flags
-        this.processMixedLoop(obj.questStatus, storage.questStatus, ["max_hp", "max_mp"]);
+        this.processMixedLoop(obj.questStatus, storage.questStatus, ["max_hp", "max_mp", "swordEquip", "shieldEquip"]);
 
-        let swordLevel = storage.questStatus.swordLevel;
-        let shieldLevel = storage.questStatus.shieldLevel;
         let triforce = storage.questStatus.triforce;
         let pearls = storage.questStatus.pearls;
         let songs = storage.questStatus.songs;
@@ -262,10 +264,8 @@ export class WWOSaveData implements ISaveSyncData {
         let deciphered_triforce = storage.questStatus.deciphered_triforce;
         let tingle_statues = storage.questStatus.tingle_statues;
 
-        parseFlagChanges(obj.questStatus.swordLevel, swordLevel);
-        parseFlagChanges(obj.questStatus.shieldLevel, shieldLevel);
+        //TODO: Fix Hero's Charm syncing the wearing bit
         parseFlagChanges(obj.questStatus.songs, songs);
-        parseFlagChanges(obj.questStatus.hero_charm, hero_charm);
         parseFlagChanges(obj.questStatus.triforce, triforce);
         parseFlagChanges(obj.questStatus.pearls, pearls);
         parseFlagChanges(obj.questStatus.pirate_charm, pirate_charm);
@@ -276,11 +276,11 @@ export class WWOSaveData implements ISaveSyncData {
         parseFlagChanges(obj.questStatus.deciphered_triforce, deciphered_triforce);
         parseFlagChanges(obj.questStatus.tingle_statues, tingle_statues);
 
+        storage.questStatus.bracelet = obj.questStatus.bracelet
         storage.questStatus.triforce = triforce;
         storage.questStatus.pearls = pearls;
         storage.questStatus.songs = songs;
         storage.questStatus.pirate_charm = pirate_charm;
-        storage.questStatus.hero_charm = hero_charm;
         storage.questStatus.owned_charts = owned_charts;
         storage.questStatus.opened_charts = opened_charts;
         storage.questStatus.completed_charts = completed_charts;
@@ -288,30 +288,25 @@ export class WWOSaveData implements ISaveSyncData {
         storage.questStatus.deciphered_triforce = deciphered_triforce;
         storage.questStatus.tingle_statues = tingle_statues;
 
-        //Equipment
-        if (storage.questStatus.swordEquip === 0xFF && obj.questStatus.swordEquip < storage.questStatus.swordEquip) {
-          storage.questStatus.swordLevel = swordLevel;
-          storage.questStatus.swordEquip = obj.questStatus.swordEquip;
+        //Hero's Charm
+        for (let i = 0; i < hero_charm.byteLength; i++) {
+          if (i === 0) { //prevents setting "equipped" bit
+            let incomingCount = obj.questStatus.hero_charm.readUInt8(i);
+            let storageCount = storage.questStatus.hero_charm.readUInt8(i);
+            let buf = storage.questStatus.hero_charm
+            if (incomingCount !== storageCount) storageCount = incomingCount;
+            buf.writeUInt8(storageCount, i);
+            storage.questStatus.hero_charm = buf;
+          }
         }
-        else if (obj.questStatus.swordEquip !== 0xFF && obj.questStatus.swordEquip > storage.questStatus.swordEquip) {
-          storage.questStatus.swordLevel = swordLevel;
-          storage.questStatus.swordEquip = obj.questStatus.swordEquip;
-        }
+        
+        this.processMixedLoop(obj.swords, storage.swords, []);
+        this.processMixedLoop(obj.shields, storage.shields, []);
 
-        if (storage.questStatus.shieldEquip === 0xFF && obj.questStatus.shieldEquip < storage.questStatus.braceletEquip) {
-          storage.questStatus.shieldLevel = shieldLevel;
-          storage.questStatus.shieldEquip = obj.questStatus.shieldEquip;
-        }
-        else if (obj.questStatus.shieldEquip !== 0xFF && obj.questStatus.shieldEquip > storage.questStatus.shieldEquip) {
-          storage.questStatus.shieldLevel = shieldLevel;
-          storage.questStatus.shieldEquip = obj.questStatus.shieldEquip;
-        }
         if (storage.questStatus.braceletEquip === 0xFF && obj.questStatus.braceletEquip < storage.questStatus.braceletEquip) {
-          storage.questStatus.bracelet = obj.questStatus.bracelet
           storage.questStatus.braceletEquip = obj.questStatus.braceletEquip;
         }
         else if (obj.questStatus.braceletEquip !== 0xFF && obj.questStatus.braceletEquip > storage.questStatus.braceletEquip) {
-          storage.questStatus.bracelet = obj.questStatus.bracelet;
           storage.questStatus.braceletEquip = obj.questStatus.braceletEquip;
         }
 
