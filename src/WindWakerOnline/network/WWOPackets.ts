@@ -97,152 +97,15 @@ export class WWO_ErrorPacket extends Packet{
 
 }
 
-export class WWO_ClientFlagUpdate extends Packet {
-  swordLevel: Buffer;
-  shieldLevel: Buffer;
-  bracelet: Buffer;
-  pirate_charm: Buffer;
-  hero_charm: Buffer;
-  sectors: Buffer;
-  dec_tri: Buffer;
-  pearls: Buffer;
-  song: Buffer;
-  triforce: Buffer;
-  compChart: Buffer;
-  openChart: Buffer;
-  ownChart: Buffer;
-  spoils_slots: Buffer;
-  bait_slots: Buffer;
-  delivery_slots: Buffer;
-  owned_delivery: Buffer;
-  owned_spoils: Buffer;
-  owned_bait: Buffer;
-  count_spoils: Buffer;
-  count_delivery: Buffer;
-  count_bait: Buffer;
+export class WWO_FlagUpdate extends Packet {
+  eventFlags: Buffer;
 
   constructor(
-    swordLevel: Buffer,
-    shieldLevel: Buffer,
-    bracelet: Buffer,
-    pirate_charm: Buffer,
-    hero_charm: Buffer,
-    sectors: Buffer,
-    dec_tri: Buffer,
-    pearls: Buffer,
-    song: Buffer,
-    triforce: Buffer,
-    compChart: Buffer,
-    openChart: Buffer,
-    ownChart: Buffer,
-    spoils_slots: Buffer,
-    bait_slots: Buffer,
-    delivery_slots: Buffer,
-    owned_delivery: Buffer,
-    owned_spoils: Buffer,
-    owned_bait: Buffer,
-    count_spoils: Buffer,
-    count_delivery: Buffer,
-    count_bait: Buffer,
+    eventFlags: Buffer,
     lobby: string
   ) {
-    super('WWO_ClientFlagUpdate', 'WWOnline', lobby, false);
-    this.swordLevel = swordLevel;
-    this.shieldLevel = shieldLevel;
-    this.bracelet = bracelet;
-    this.pirate_charm = pirate_charm;
-    this.hero_charm = hero_charm;
-    this.sectors = sectors;
-    this.dec_tri = dec_tri;
-    this.pearls = pearls;
-    this.song = song;
-    this.triforce = triforce;
-    this.compChart = compChart;
-    this.openChart = openChart;
-    this.ownChart = ownChart;
-    this.spoils_slots = spoils_slots;
-    this.bait_slots = bait_slots;
-    this.delivery_slots = delivery_slots;
-    this.owned_delivery = owned_delivery;
-    this.owned_spoils = owned_spoils;
-    this.owned_bait = owned_bait;
-    this.count_spoils = count_spoils;
-    this.count_delivery = count_delivery;
-    this.count_bait = count_bait;
-  }
-}
-
-export class WWO_ServerFlagUpdate extends Packet {
-  swordLevel: any;
-  shieldLevel: any;
-  bracelet: any;
-  pirate_charm: any;
-  hero_charm: any;
-  sectors: any;
-  dec_tri: any;
-  pearls: any;
-  song: any;
-  triforce: any;
-  compChart: any;
-  openChart: any;
-  ownChart: any;
-  spoils_slots: any;
-  bait_slots: any;
-  delivery_slots: any;
-  owned_delivery: any;
-  owned_spoils: any;
-  owned_bait: any;
-  count_spoils: any;
-  count_delivery: any;
-  count_bait: any;
-  constructor(
-    swordLevel: any,
-    shieldLevel: any,
-    bracelet: any,
-    pirate_charm: any,
-    hero_charm: any,
-    sectors: any,
-    dec_tri: any,
-    pearls: any,
-    song: any,
-    triforce: any,
-    compChart: any,
-    openChart: any,
-    ownChart: any,
-    spoils_slots: any,
-    bait_slots: any,
-    delivery_slots: any,
-    owned_delivery: any,
-    owned_spoils: any,
-    owned_bait: any,
-    count_spoils: any,
-    count_delivery: any,
-    count_bait: any,
-    lobby: string
-  ) {
-    super('WWO_ServerFlagUpdate', 'WWOnline', lobby, false);
-    this.swordLevel = swordLevel;
-    this.shieldLevel = shieldLevel;
-    this.bracelet = bracelet;
-    this.pirate_charm = pirate_charm;
-    this.hero_charm = hero_charm;
-    this.sectors = sectors;
-    this.dec_tri = dec_tri;
-    this.pearls = pearls;
-    this.song = song;
-    this.triforce = triforce;
-    this.compChart = compChart;
-    this.openChart = openChart;
-    this.ownChart = ownChart;
-    this.spoils_slots = spoils_slots;
-    this.bait_slots = bait_slots;
-    this.delivery_slots = delivery_slots;
-    this.owned_delivery = owned_delivery;
-    this.owned_spoils = owned_spoils;
-    this.owned_bait = owned_bait;
-    this.count_spoils = count_spoils;
-    this.count_delivery = count_delivery;
-    this.count_bait = count_bait;
+    super('WWO_FlagUpdate', 'WWOnline', lobby, false);
+    this.eventFlags = eventFlags;
   }
 }
 

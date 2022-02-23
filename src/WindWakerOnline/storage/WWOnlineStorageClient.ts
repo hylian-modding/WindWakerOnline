@@ -7,7 +7,6 @@ export class WWOnlineStorageClient extends WWOnlineStorageBase {
   localization: any = {};
   localization_island: any = {};
   scene_keys: any = {};
-
   bottleCache: API.InventoryItem[] = [
     API.InventoryItem.NONE,
     API.InventoryItem.NONE,

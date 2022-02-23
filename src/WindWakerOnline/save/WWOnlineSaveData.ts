@@ -27,7 +27,9 @@ export class WWOSaveData implements ISaveSyncData {
       "inventory",
       "questStatus",
       "swords",
-      "shields"
+      "shields",
+      'eventFlags',
+      'eventMngrFlags'
     ];
 
     obj = JSON.parse(JSON.stringify(this.core.save));
@@ -151,6 +153,11 @@ export class WWOSaveData implements ISaveSyncData {
 
       this.processMixedLoop_OVERWRITE(obj.swords, storage.swords, []);
       this.processMixedLoop_OVERWRITE(obj.shields, storage.shields, []);
+
+
+      //Flags (God Help Me)
+      storage.eventFlags = obj.eventFlags;
+      //storage.eventMngrFlags = obj.eventMngrFlags;
 
     } catch (err: any) {
       console.log(err.stack);

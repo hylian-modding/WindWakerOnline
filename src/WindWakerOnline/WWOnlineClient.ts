@@ -8,7 +8,7 @@ import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { INetworkPlayer, LobbyData, NetworkHandler } from "modloader64_api/NetworkHandler";
 import { Preinit, Init, Postinit, onTick } from "modloader64_api/PluginLifecycle";
 import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
-import { WWO_UpdateSaveDataPacket, WWO_DownloadRequestPacket, WWO_ScenePacket, WWO_SceneRequestPacket, WWO_DownloadResponsePacket, WWO_BottleUpdatePacket, WWO_ErrorPacket, WWO_ClientFlagUpdate, WWO_ServerFlagUpdate, WWO_RoomPacket, WWO_RupeePacket } from "./network/WWOPackets";
+import { WWO_UpdateSaveDataPacket, WWO_DownloadRequestPacket, WWO_ScenePacket, WWO_SceneRequestPacket, WWO_DownloadResponsePacket, WWO_BottleUpdatePacket, WWO_ErrorPacket, WWO_RoomPacket, WWO_RupeePacket, WWO_FlagUpdate } from "./network/WWOPackets";
 import { IWWOnlineLobbyConfig, WWOnlineConfigCategory } from "./WWOnline";
 import { WWOSaveData } from "./save/WWOnlineSaveData";
 import { WWOnlineStorage } from "./storage/WWOnlineStorage";
@@ -20,6 +20,7 @@ import { InventoryItem, IWWCore, WWEvents } from "WindWaker/API/WWAPI";
 import { parseFlagChanges } from "./save/parseFlagChanges";
 import * as API from "WindWaker/API/WWAPI";
 import { PuppetOverlord } from "./puppet/PuppetOverlord";
+import bitwise from 'bitwise';
 
 export default class WWOnlineClient {
     @InjectCore()
@@ -45,7 +46,7 @@ export default class WWOnlineClient {
 
     lastRupees: number = 0;
     sentRupees: boolean = false;
-    
+
     @EventHandler(EventsClient.ON_PLAYER_JOIN)
     onPlayerJoined(player: INetworkPlayer) {
         this.clientStorage.players[player.uuid] = "-1";
@@ -92,6 +93,9 @@ export default class WWOnlineClient {
         if (this.syncTimer > this.synctimerMax) {
             this.clientStorage.lastPushHash = this.ModLoader.utils.hashBuffer(Buffer.from("RESET"));
             //this.ModLoader.logger.debug("Forcing resync due to timeout.");
+            //this.core.save.swords.swordLevel = API.Sword.Master;
+            //this.core.save.shields.shieldLevel = API.Shield.MIRROR;
+            //console.log(`save: ${this.core.save.swords.swordLevel}, ${this.core.save.shields.shieldLevel}`);
         }
         let save = this.clientStorage.saveManager.createSave();
         if (this.clientStorage.lastPushHash !== this.clientStorage.saveManager.hash) {
@@ -113,39 +117,43 @@ export default class WWOnlineClient {
         this.lastRupees = rupees;
     } */
 
-    /* updateFlags() {
+    updateFlags() {
+        if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNameValid() || this.core.helper.isPaused() || !this.clientStorage.first_time_sync) return;
+        let eventFlagsAddr = 0x803C522C;
+        let eventFlags = Buffer.alloc(0x100);
+        let eventFlagByte = 0;
+        let eventFlagBit = false;
+        let eventFlagStorage = this.clientStorage.eventFlags;
+        const indexBlacklist = [0x1, 0x2, 0x5, 0x7, 0x8, 0xE, 0xF, 0x24, 0x25, 0x2D, 0x2E, 0x34];
 
-        Object.keys(this.core.save.questStatus).forEach((key: string) => {
-            if (Buffer.isBuffer(this.core.save.questStatus[key])) {
-                parseFlagChanges(this.core.save.questStatus[key], this.clientStorage.questStorage[key]);
+        for (let i = 0; i < eventFlags.byteLength; i++) {
+            let eventFlagByteStorage = eventFlagStorage.readUInt8(i); //client storage bits
+            for (let j = 0; j <= 7; j++) {
+                //console.log(i);
+                eventFlagByte = this.ModLoader.emulator.rdramRead8(eventFlagsAddr); //in-game bits
+                eventFlagBit = this.ModLoader.emulator.rdramReadBit8(eventFlagsAddr, j); //current bit
+                if (!indexBlacklist.includes(i) && eventFlagByte !== eventFlagByteStorage) {
+                    //console.log(j);
+                    //let temp = eventFlagByte
+                    eventFlagByte = (eventFlagByte |= eventFlagByteStorage)
+                    console.log(`Flag: 0x${i.toString(16)}, val: 0x${eventFlagByteStorage.toString(16)} -> 0x${eventFlagByte.toString(16)}`);
+                }
+                else if (indexBlacklist.includes(i) && eventFlagByte !== eventFlagByteStorage) console.log(`indexBlacklist: 0x${i.toString(16)}`);
+                eventFlagByteStorage = eventFlagByte; //client storage bits
             }
-        })
-
-        this.ModLoader.clientSide.sendPacket(new WWO_ClientFlagUpdate(
-            this.clientStorage.questStorage.swordLevel,
-            this.clientStorage.questStorage.shieldLevel,
-            this.clientStorage.questStorage.bracelet,
-            this.clientStorage.questStorage.pirate_charm,
-            this.clientStorage.questStorage.hero_charm,
-            this.clientStorage.questStorage.sectors,
-            this.clientStorage.questStorage.deciphered_triforce,
-            this.clientStorage.questStorage.pearls,
-            this.clientStorage.questStorage.songs,
-            this.clientStorage.questStorage.triforce,
-            this.clientStorage.questStorage.completed_charts,
-            this.clientStorage.questStorage.opened_charts,
-            this.clientStorage.questStorage.owned_charts,
-            this.clientStorage.inventoryStorage.spoils_slots,
-            this.clientStorage.inventoryStorage.bait_slots,
-            this.clientStorage.inventoryStorage.delivery_slots,
-            this.clientStorage.inventoryStorage.owned_delivery,
-            this.clientStorage.inventoryStorage.owned_spoils,
-            this.clientStorage.inventoryStorage.owned_bait,
-            this.clientStorage.inventoryStorage.count_spoils,
-            this.clientStorage.inventoryStorage.count_delivery,
-            this.clientStorage.inventoryStorage.count_bait,
-            this.ModLoader.clientLobby));
-    } */
+            eventFlags.writeUInt8(eventFlagByte, i);
+            eventFlagsAddr = eventFlagsAddr + 1;
+        }
+        if (!eventFlagStorage.equals(eventFlags)) {
+            //console.log(`eventFlagStorage:`);
+            //console.log(eventFlagStorage.toString('hex'));
+            //console.log(`eventFlags`);
+            //console.log(eventFlags.toString('hex'))
+            this.clientStorage.eventFlags = eventFlags;
+            eventFlagStorage = eventFlags;
+            this.ModLoader.clientSide.sendPacket(new WWO_FlagUpdate(this.clientStorage.eventFlags, this.ModLoader.clientLobby));
+        }
+    }
 
     updateBottles(onlyfillCache = false) {
         let bottles: InventoryItem[] = [
@@ -415,6 +423,20 @@ export default class WWOnlineClient {
         this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
     }
 
+    @NetworkHandler('WWO_FlagUpdate')
+    onFlagUpdate(packet: WWO_FlagUpdate) {
+        console.log("onFlagUpdate Client");
+
+        for(let i = 0; i < packet.eventFlags.byteLength; i++){
+            let tempByteIncoming = packet.eventFlags.readUInt8(i);
+            let tempByte = this.clientStorage.eventFlags.readUInt8(i);
+            if(tempByteIncoming !== tempByte) console.log(`Writing flag: 0x${i.toString(16)}, tempByte: 0x${tempByte.toString(16)}, tempByteIncoming: 0x${tempByteIncoming.toString(16)} `);
+        }
+
+        parseFlagChanges(packet.eventFlags, this.clientStorage.eventFlags);
+        this.core.save.eventFlags = this.clientStorage.eventFlags;
+    }
+
     /* @NetworkHandler('WWO_RupeePacket')
     onRupees(packet: WWO_RupeePacket) {
         if (!this.sentRupees) {
@@ -455,6 +477,6 @@ export default class WWOnlineClient {
 
     inventoryUpdateTick() {
         this.updateInventory();
-        //this.updateFlags();
+        this.updateFlags();
     }
 }
