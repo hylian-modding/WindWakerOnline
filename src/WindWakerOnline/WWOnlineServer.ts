@@ -248,7 +248,7 @@ export default class WWOnlineServer {
 
         console.log("onFlagUpdate Server")
 
-        const indexBlacklist = [0x1, 0x2, 0x5, 0x7, 0x8, 0xE, 0xF, 0x24, 0x25, 0x2D, 0x2E, 0x34];
+        const indexBlacklist = [0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x7, 0x8, 0x9, 0xE, 0xF, 0x24, 0x25, 0x2D, 0x2E, 0x34];
 
         for (let i = 0; i < storage.eventFlags.byteLength; i++) {
             let byteStorage = storage.eventFlags.readUInt8(i);
@@ -264,13 +264,25 @@ export default class WWOnlineServer {
                 console.log(`Server: indexBlacklist: 0x${i.toString(16)}`);
                 for (let j = 0; j <= 7; j++) {
                     switch (i) {
-                        case 0x2: //SAW_TETRA_IN_FOREST_OF_FAIRIES
-                            if (j !== 0) bitsStorage[j] = bitsIncoming[j]; //set the bits that aren't blacklisted
-                            else console.log(`Server:Blacklisted event: 0x${i}, bit: ${j}`)
+                        case 0x0: //FOREST_OF_FAIRIES_BOKOBLINS_SPAWNED
+                            if (j !== 5) bitsStorage[j] = bitsIncoming[j];
+                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
                             break;
                         case 0x1: //RESCUED_TETRA
                             if (j !== 7) bitsStorage[j] = bitsIncoming[j];
                             else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                            break;
+                        case 0x2: //SAW_TETRA_IN_FOREST_OF_FAIRIES
+                            if (j !== 0) bitsStorage[j] = bitsIncoming[j]; //set the bits that aren't blacklisted
+                            else console.log(`Server:Blacklisted event: 0x${i}, bit: ${j}`)
+                            break;
+                        case 0x3: //KILLED_ONE_FOREST_OF_FAIRIES_BOKOBLIN
+                            if (j !== 7) bitsStorage[j] = bitsIncoming[j]; //set the bits that aren't blacklisted
+                            else console.log(`Server:Blacklisted event: 0x${i}, bit: ${j}`)
+                            break;
+                        case 0x4: //KILLED_BOTH_FOREST_OF_FAIRIES_BOKOBLINS
+                            if (j !== 0) bitsStorage[j] = bitsIncoming[j]; //set the bits that aren't blacklisted
+                            else console.log(`Server:Blacklisted event: 0x${i}, bit: ${j}`)
                             break;
                         case 0x5: //GOSSIP_STONE_AT_FF1
                             if (j !== 2) bitsStorage[j] = bitsIncoming[j];
@@ -281,7 +293,11 @@ export default class WWOnlineServer {
                             else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
                             break;
                         case 0x8: //LONG_TETRA_TEXT_ON_OUTSET | COMPLETED_PIRATE_SHIP_MINIGAME_AND_SPAWN_ON_PIRATE_SHIP | GOT_CATAPULTED_TO_FF1_AND_SPAWN_THERE | TETRA_TOLD_YOU_TO_CLIMB_UP_THE_LADDER
-                            if (j !== 6 && j !== 0 && j !== 3 && j !== 1) bitsStorage[j] = bitsIncoming[j];
+                            if (j !== 6 && j !== 7 && j !== 0 && j !== 3 && j !== 1) bitsStorage[j] = bitsIncoming[j];
+                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                            break;
+                        case 0x9: //After Aryll or Talk w/ Tetra
+                            if (j !== 3) bitsStorage[j] = bitsIncoming[j];
                             else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
                             break;
                         case 0xE: //exited forest of fairies with tetra?
