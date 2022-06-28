@@ -4,7 +4,7 @@ import {
 } from 'modloader64_api/ModLoaderDefaultImpls';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 
-export class PacketWithTimeStamp extends Packet{
+export class PacketWithTimeStamp extends Packet {
   timestamp: number = Date.now();
 }
 
@@ -21,7 +21,7 @@ export class WWO_BottleUpdatePacket extends Packet {
 
 export class WWO_RupeePacket extends PacketWithTimeStamp {
   delta: number;
-  constructor(delta: number, lobby: string){
+  constructor(delta: number, lobby: string) {
     super('WWO_RupeePacket', 'WWOnline', lobby, false);
     this.delta = delta;
   }
@@ -86,11 +86,11 @@ export class WWO_UpdateSaveDataPacket extends Packet {
   }
 }
 
-export class WWO_ErrorPacket extends Packet{
+export class WWO_ErrorPacket extends Packet {
 
   message: string;
 
-  constructor(msg: string, lobby: string){
+  constructor(msg: string, lobby: string) {
     super('WWO_ErrorPacket', 'WWO', lobby, false);
     this.message = msg;
   }
@@ -98,14 +98,29 @@ export class WWO_ErrorPacket extends Packet{
 }
 
 export class WWO_FlagUpdate extends Packet {
-  eventFlags: Buffer;
+  dSv_event_c_save?: Buffer;
+  dSv_event_c?: Buffer;
+  dSv_memory_c_save?: Buffer;
+  dSv_memory_c?: Buffer;
+  dSv_zone_c_actor?: Buffer;
+  dSv_zone_c_zoneBit?: Buffer;
 
   constructor(
-    eventFlags: Buffer,
-    lobby: string
+    lobby: string,
+    dSv_event_c_save?: Buffer,
+    dSv_event_c?: Buffer,
+    dSv_memory_c_save?: Buffer,
+    dSv_memory_c?: Buffer,
+    dSv_zone_c_actor?: Buffer,
+    dSv_zone_c_zoneBit?: Buffer,
   ) {
     super('WWO_FlagUpdate', 'WWOnline', lobby, false);
-    this.eventFlags = eventFlags;
+    this.dSv_event_c_save = dSv_event_c_save;
+    this.dSv_event_c = dSv_event_c;
+    this.dSv_memory_c_save = dSv_memory_c_save;
+    this.dSv_memory_c = dSv_memory_c;
+    this.dSv_zone_c_actor = dSv_zone_c_actor;
+    this.dSv_zone_c_zoneBit = dSv_zone_c_zoneBit;
   }
 }
 
@@ -124,5 +139,29 @@ export class WWO_PuppetWrapperPacket extends UDPPacket {
   constructor(packet: WWO_PuppetPacket, lobby: string) {
     super('WWO_PuppetPacket', 'WWO', lobby, false);
     this.data = JSON.stringify(packet);
+  }
+}
+
+export class WWO_ClientSceneContextUpdate extends Packet {
+  chests: Buffer;
+  switches: Buffer;
+  collect: Buffer;
+  scene: string;
+  world: number;
+
+  constructor(
+    chests: Buffer,
+    switches: Buffer,
+    collect: Buffer,
+    lobby: string,
+    scene: string,
+    world: number
+  ) {
+    super('WWO_ClientSceneContextUpdate', 'WWOnline', lobby, false);
+    this.chests = chests;
+    this.switches = switches;
+    this.collect = collect;
+    this.scene = scene;
+    this.world = world;
   }
 }

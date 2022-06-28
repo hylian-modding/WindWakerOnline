@@ -29,7 +29,9 @@ export class PuppetData {
     this.core = core;
     this.copyFields.push('pos');
     //this.copyFields.push('matrixData');
-    //this.copyFields.push('rot');
+    this.copyFields.push('rot');
+    //this.copyFields.push('upperAnimID');
+    //this.copyFields.push('lowerAnimID');
   }
 
   get pos(): Buffer {
@@ -49,6 +51,20 @@ export class PuppetData {
     this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0x1F0, rot);
     this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0x204, rot);
     this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0x20C, rot);
+  }
+
+  get upperAnimID(): number {
+    return this.core.link.upperAnimID;
+  }
+  set upperAnimID(id: number) {
+    this.ModLoader.emulator.rdramWrite16(this.pointer + 0x88C, id);
+  }
+
+  get lowerAnimID(): number {
+    return this.core.link.lowerAnimID;
+  }
+  set lowerAnimID(id: number) {
+    this.ModLoader.emulator.rdramWrite16(this.pointer + 0x88E, id);
   }
 
   get matrixData(): Buffer {

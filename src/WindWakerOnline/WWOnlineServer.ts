@@ -7,7 +7,7 @@ import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { IPacketHeader, LobbyData, ServerNetworkHandler } from "modloader64_api/NetworkHandler";
 import { Preinit } from "modloader64_api/PluginLifecycle";
 import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
-import { WWO_ScenePacket, WWO_DownloadRequestPacket, WWO_DownloadResponsePacket, WWO_UpdateSaveDataPacket, WWO_ErrorPacket, WWO_RoomPacket, WWO_BottleUpdatePacket, WWO_RupeePacket, WWO_FlagUpdate } from "./network/WWOPackets";
+import { WWO_ScenePacket, WWO_DownloadRequestPacket, WWO_DownloadResponsePacket, WWO_UpdateSaveDataPacket, WWO_ErrorPacket, WWO_RoomPacket, WWO_BottleUpdatePacket, WWO_RupeePacket, WWO_FlagUpdate, WWO_ClientSceneContextUpdate } from "./network/WWOPackets";
 import { WWOSaveData } from "./save/WWOnlineSaveData";
 import { WWOnlineStorage, WWOnlineSave_Server } from "./storage/WWOnlineStorage";
 import WWSerialize from "./storage/WWSerialize";
@@ -238,109 +238,41 @@ export default class WWOnlineServer {
 
     @ServerNetworkHandler('WWO_FlagUpdate')
     onFlagUpdate(packet: WWO_FlagUpdate) {
-        let storage: WWOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
-            packet.lobby,
-            this.parent
-        ) as WWOnlineStorage;
-        if (storage === null) {
-            return;
-        }
-
-        console.log("onFlagUpdate Server")
-
-        const indexBlacklist = [0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x7, 0x8, 0x9, 0xE, 0xF, 0x24, 0x25, 0x2D, 0x2E, 0x34];
-
-        for (let i = 0; i < storage.eventFlags.byteLength; i++) {
-            let byteStorage = storage.eventFlags.readUInt8(i);
-            let bitsStorage = bitwise.byte.read(byteStorage as any);
-            let byteIncoming = packet.eventFlags.readUInt8(i);
-            let bitsIncoming = bitwise.byte.read(byteIncoming as any);
-
-            if (!indexBlacklist.includes(i) && byteStorage !== byteIncoming) {
-                console.log(`Server: Parsing flag: 0x${i.toString(16)}, byteIncoming: 0x${byteIncoming.toString(16)}, bitsIncoming: 0x${bitsIncoming} `);
-                parseFlagChanges(packet.eventFlags, storage.eventFlags);
+        try {
+            let storage: WWOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+                packet.lobby,
+                this.parent
+            ) as WWOnlineStorage;
+            if (storage === null) {
+                return;
             }
-            else if (indexBlacklist.includes(i) && byteStorage !== byteIncoming) {
-                console.log(`Server: indexBlacklist: 0x${i.toString(16)}`);
-                for (let j = 0; j <= 7; j++) {
-                    switch (i) {
-                        case 0x0: //FOREST_OF_FAIRIES_BOKOBLINS_SPAWNED
-                            if (j !== 5) bitsStorage[j] = bitsIncoming[j];
-                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
-                            break;
-                        case 0x1: //RESCUED_TETRA
-                            if (j !== 7) bitsStorage[j] = bitsIncoming[j];
-                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
-                            break;
-                        case 0x2: //SAW_TETRA_IN_FOREST_OF_FAIRIES
-                            if (j !== 0) bitsStorage[j] = bitsIncoming[j]; //set the bits that aren't blacklisted
-                            else console.log(`Server:Blacklisted event: 0x${i}, bit: ${j}`)
-                            break;
-                        case 0x3: //KILLED_ONE_FOREST_OF_FAIRIES_BOKOBLIN
-                            if (j !== 7) bitsStorage[j] = bitsIncoming[j]; //set the bits that aren't blacklisted
-                            else console.log(`Server:Blacklisted event: 0x${i}, bit: ${j}`)
-                            break;
-                        case 0x4: //KILLED_BOTH_FOREST_OF_FAIRIES_BOKOBLINS
-                            if (j !== 0) bitsStorage[j] = bitsIncoming[j]; //set the bits that aren't blacklisted
-                            else console.log(`Server:Blacklisted event: 0x${i}, bit: ${j}`)
-                            break;
-                        case 0x5: //GOSSIP_STONE_AT_FF1
-                            if (j !== 2) bitsStorage[j] = bitsIncoming[j];
-                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
-                            break;
-                        case 0x7: //SAW_PIRATE_SHIP_MINIGAME_INTRO | COMPLETED_PIRATE_SHIP_MINIGAME
-                            if (j !== 2 && j !== 3) bitsStorage[j] = bitsIncoming[j];
-                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
-                            break;
-                        case 0x8: //LONG_TETRA_TEXT_ON_OUTSET | COMPLETED_PIRATE_SHIP_MINIGAME_AND_SPAWN_ON_PIRATE_SHIP | GOT_CATAPULTED_TO_FF1_AND_SPAWN_THERE | TETRA_TOLD_YOU_TO_CLIMB_UP_THE_LADDER
-                            if (j !== 6 && j !== 7 && j !== 0 && j !== 3 && j !== 1) bitsStorage[j] = bitsIncoming[j];
-                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
-                            break;
-                        case 0x9: //After Aryll or Talk w/ Tetra
-                            if (j !== 3) bitsStorage[j] = bitsIncoming[j];
-                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
-                            break;
-                        case 0xE: //exited forest of fairies with tetra?
-                            if (j !== 2) bitsStorage[j] = bitsIncoming[j];
-                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
-                            break;
-                        case 0xF: //KORL_UNLOCKED_AND_SPAWN_ON_WINDFALL
-                            if (j !== 0) bitsStorage[j] = bitsIncoming[j];
-                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
-                            break;
-                        case 0x24: //WATCHED_DEPARTURE_CUTSCENE_AND_SPAWN_ON_PIRATE_SHIP
-                            if (j !== 7) bitsStorage[j] = bitsIncoming[j];
-                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
-                            break;
-                        case 0x25: //WATCHED_FIND_SISTER_IN_FF1_CUTSCENE
-                            if (j !== 0) bitsStorage[j] = bitsIncoming[j];
-                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
-                            break;
-                        case 0x2D: //tetra and her gang free mila maggie and aryll from the prison
-                            if (j !== 3) bitsStorage[j] = bitsIncoming[j];
-                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
-                            break;
-                        case 0x2E: //WATCHED_MEETING_KORL_CUTSCENE
-                            if (j !== 3) bitsStorage[j] = bitsIncoming[j];
-                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
-                            break;
-                        case 0x34: //Medli/Makar has been kidnapped by a Floormaster
-                            if (j !== 1 && j !== 0) bitsStorage[j] = bitsIncoming[j];
-                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
-                            break;
-                    }
-                }
-                let newByteStorage = bitwise.byte.write(bitsStorage); //write our updated bits into a byte
-                //console.log(`Server: Parsing flag: 0x${i.toString(16)}, byteStorage: 0x${byteStorage.toString(16)}, newByteStorage: 0x${newByteStorage.toString(16)} `);
-                if (newByteStorage !== byteStorage) {  //make sure the updated byte is different than the original
-                    byteStorage = newByteStorage;
-                    storage.eventFlags.writeUInt8(byteStorage, i); //write new byte into the event flag at index i
-                    console.log(`Server: Parsing flag: 0x${i.toString(16)}, byteStorage: 0x${byteStorage.toString(16)}, newByteStorage: 0x${newByteStorage.toString(16)} `);
-                }
-            }
-        }
 
-        this.ModLoader.serverSide.sendPacket(new WWO_FlagUpdate(storage.eventFlags, packet.lobby));
+            console.log("onFlagUpdate Server");
+
+            // IDs for updateFlag blacklists
+            let dSv_event_c_save_id = 0;
+            let dSv_event_c_id = 1;
+            let dSv_memory_c_save_id = 2;
+            let dSv_memory_c_id = 3;
+            let dSv_zone_c_actor_id = 4;
+            let dSv_zone_c_zoneBit_id = 5;
+            const dSv_event_c_save_blacklist = [0x1, 0x2, 0x5, 0x7, 0x8, 0xE, 0xF, 0x24, 0x25, 0x2D, 0x2E, 0x34];
+            
+            let temp_dSv_event_c_save = this.ModLoader.utils.cloneBuffer(storage.dSv_event_c_save);
+            let temp_dSv_event_c = this.ModLoader.utils.cloneBuffer(storage.dSv_event_c);
+            let temp_dSv_memory_c_save = this.ModLoader.utils.cloneBuffer(storage.dSv_memory_c_save);
+
+            storage.dSv_event_c_save = this.updateFlags(storage.dSv_event_c_save, packet.dSv_event_c_save!, dSv_event_c_save_blacklist, dSv_event_c_save_id);
+            storage.dSv_event_c = this.updateFlags(storage.dSv_event_c, packet.dSv_event_c!, dSv_event_c_save_blacklist, dSv_event_c_save_id);
+            //this.updateFlags(storage.dSv_memory_c, packet.dSv_memory_c!, [], dSv_memory_c_id);
+            storage.dSv_memory_c_save = this.updateFlags(storage.dSv_memory_c_save, packet.dSv_memory_c_save!, [], dSv_memory_c_save_id);
+            //this.updateFlags(storage.dSv_zone_c_actor, packet.dSv_zone_c_actor!, [], dSv_zone_c_actor_id);
+            //this.updateFlags(storage.dSv_zone_c_zoneBit, packet.dSv_zone_c_zoneBit!, [], dSv_zone_c_zoneBit_id);
+
+            this.ModLoader.serverSide.sendPacket(new WWO_FlagUpdate(packet.lobby, storage.dSv_event_c_save, storage.dSv_event_c, storage.dSv_memory_c_save, storage.dSv_memory_c, storage.dSv_zone_c_actor));
+        } catch (err: any) {
+            console.log(err);
+        };
     }
 
     @ServerNetworkHandler('WWO_UpdateSaveDataPacket')
@@ -368,5 +300,122 @@ export default class WWOnlineServer {
                 }).catch((err: string) => { });
             }
         });
+    }
+
+    updateFlags(storage: Buffer, incoming: Buffer, blacklist: number[], flagID: number) {
+        let flagStorage = this.ModLoader.utils.cloneBuffer(storage);
+        let flagIncoming = this.ModLoader.utils.cloneBuffer(incoming);
+        for (let i = 0; i < storage.byteLength; i++) {
+            let byteStorage = flagStorage.readUInt8(i);
+            let byteIncoming = flagIncoming.readUInt8(i);
+
+            if (!blacklist.includes(i) && byteStorage !== byteIncoming) {
+                console.log(`Server: Parsing flag ${flagID}: 0x${i.toString(16)}, byteIncoming: 0x${byteIncoming.toString(16)}, byteStorage: 0x${byteStorage} `);
+                parseFlagChanges(flagIncoming, flagStorage);
+            }
+            else if (blacklist.includes(i) && byteStorage !== byteIncoming) {
+                switch (flagID) {
+                    case 0: //dSv_event_c_save_id = 0;
+                        this.dSv_event_c_parse(flagStorage, byteStorage, byteIncoming, i);
+                        break;
+                    case 1: //dSv_event_c_id = 1;                       
+                        break;
+                    case 2: //dSv_memory_c_save_id = 2;
+                        break;
+                    case 3: //dSv_memory_c_id = 3;
+                        break;
+                    case 4:  //dSv_zone_c_actor_id = 4;
+                        break;
+                    case 5:  //dSv_zone_c_zoneBit_id = 5;
+                        break;
+                }
+            }
+        }
+        storage = flagStorage;
+        return storage;
+    }
+
+    dSv_event_c_parse(storageBuf: Buffer, byteStorage: number, byteIncoming: number, index: number) {
+        let bitsStorage = bitwise.byte.read(byteStorage as any);
+        let bitsIncoming = bitwise.byte.read(byteIncoming as any);
+        for (let j = 0; j <= 7; j++) {
+            switch (index) {
+                case 0x0: //FOREST_OF_FAIRIES_BOKOBLINS_SPAWNED
+                    if (j !== 5) bitsStorage[j] = bitsIncoming[j];
+                    //else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                    break;
+                case 0x1: //RESCUED_TETRA
+                    if (j !== 7) bitsStorage[j] = bitsIncoming[j];
+                    //else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                    break;
+                case 0x2: //SAW_TETRA_IN_FOREST_OF_FAIRIES
+                    if (j !== 0) bitsStorage[j] = bitsIncoming[j]; //set the bits that aren't blacklisted
+                    //else console.log(`Server:Blacklisted event: 0x${i}, bit: ${j}`)
+                    break;
+                case 0x3: //KILLED_ONE_FOREST_OF_FAIRIES_BOKOBLIN
+                    if (j !== 7) bitsStorage[j] = bitsIncoming[j]; //set the bits that aren't blacklisted
+                    //else console.log(`Server:Blacklisted event: 0x${i}, bit: ${j}`)
+                    break;
+                case 0x4: //KILLED_BOTH_FOREST_OF_FAIRIES_BOKOBLINS
+                    if (j !== 0) bitsStorage[j] = bitsIncoming[j]; //set the bits that aren't blacklisted
+                    //else console.log(`Server:Blacklisted event: 0x${i}, bit: ${j}`)
+                    break;
+                case 0x5: //GOSSIP_STONE_AT_FF1
+                    if (j !== 2) bitsStorage[j] = bitsIncoming[j];
+                    //else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                    break;
+                case 0x7: //SAW_PIRATE_SHIP_MINIGAME_INTRO | COMPLETED_PIRATE_SHIP_MINIGAME
+                    if (j !== 2 && j !== 3) bitsStorage[j] = bitsIncoming[j];
+                    //else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                    break;
+                case 0x8: //LONG_TETRA_TEXT_ON_OUTSET | COMPLETED_PIRATE_SHIP_MINIGAME_AND_SPAWN_ON_PIRATE_SHIP | GOT_CATAPULTED_TO_FF1_AND_SPAWN_THERE | TETRA_TOLD_YOU_TO_CLIMB_UP_THE_LADDER
+                    if (j !== 6 && j !== 7 && j !== 0 && j !== 3 && j !== 1) bitsStorage[j] = bitsIncoming[j];
+                    //else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                    break;
+                case 0x9: //After Aryll or Talk w/ Tetra
+                    if (j !== 3) bitsStorage[j] = bitsIncoming[j];
+                    //else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                    break;
+                case 0xE: //exited forest of fairies with tetra?
+                    if (j !== 2) bitsStorage[j] = bitsIncoming[j];
+                    //else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                    break;
+                case 0xF: //KORL_UNLOCKED_AND_SPAWN_ON_WINDFALL
+                    if (j !== 0) bitsStorage[j] = bitsIncoming[j];
+                    //else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                    break;
+                case 0x24: //WATCHED_DEPARTURE_CUTSCENE_AND_SPAWN_ON_PIRATE_SHIP
+                    if (j !== 7) bitsStorage[j] = bitsIncoming[j];
+                    //else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                    break;
+                case 0x25: //WATCHED_FIND_SISTER_IN_FF1_CUTSCENE
+                    if (j !== 0) bitsStorage[j] = bitsIncoming[j];
+                    //else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                    break;
+                case 0x2D: //tetra and her gang free mila maggie and aryll from the prison
+                    if (j !== 3) bitsStorage[j] = bitsIncoming[j];
+                    //else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                    break;
+                case 0x2E: //WATCHED_MEETING_KORL_CUTSCENE
+                    if (j !== 3) bitsStorage[j] = bitsIncoming[j];
+                    //else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                    break;
+                case 0x34: //Medli/Makar has been kidnapped by a Floormaster
+                    if (j !== 1 && j !== 0) bitsStorage[j] = bitsIncoming[j];
+                    //else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                    break;
+            }
+        }
+        let newByteStorage = bitwise.byte.write(bitsStorage); //write our updated bits into a byte
+        if (newByteStorage !== byteStorage) {  //make sure the updated byte is different than the original
+            byteStorage = newByteStorage;
+            storageBuf.writeUInt8(byteStorage, index); //write new byte into the event flag at index i
+            //console.log(`Server: Parsing flag: 0x${i.toString(16)}, byteStorage: 0x${byteStorage.toString(16)}, newByteStorage: 0x${newByteStorage.toString(16)} `);
+        }
+    }
+
+    @ServerNetworkHandler('WWO_ClientSceneContextUpdate')
+    onSceneContextSync_server(packet: WWO_ClientSceneContextUpdate) {
+        this.sendPacketToPlayersInScene(packet);
     }
 }

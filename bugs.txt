@@ -1,0 +1,4 @@
+WWO Bugs: 
+1) Spoils bag sometimes doesn't sync some counts
+2) Owned Sword flag not set properly
+3) Hurricane Spin doesn't sync

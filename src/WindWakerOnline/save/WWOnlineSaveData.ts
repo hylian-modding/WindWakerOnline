@@ -28,8 +28,12 @@ export class WWOSaveData implements ISaveSyncData {
       "questStatus",
       "swords",
       "shields",
-      'eventFlags',
-      'eventMngrFlags'
+      "dSv_event_c_save",
+      "dSv_event_c",
+      "dSv_memory_c_save",
+      "dSv_memory_c",
+      "dSv_zone_c_actor",
+      "dSv_zone_c_zoneBit"
     ];
 
     obj = JSON.parse(JSON.stringify(this.core.save));
@@ -156,7 +160,12 @@ export class WWOSaveData implements ISaveSyncData {
 
 
       //Flags (God Help Me)
-      storage.eventFlags = obj.eventFlags;
+      storage.dSv_event_c_save = obj.dSv_event_c_save;
+      storage.dSv_event_c = obj.dSv_event_c;
+      storage.dSv_memory_c_save = obj.dSv_memory_c_save;
+      //storage.dSv_zone_c_actor = obj.dSv_zone_c_actor;
+      //storage.dSv_zone_c_zoneBit = obj.dSv_zone_c_zoneBit;
+      //storage.dSv_memory_c = obj.dSv_memory_c;
       //storage.eventMngrFlags = obj.eventMngrFlags;
 
     } catch (err: any) {
