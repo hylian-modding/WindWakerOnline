@@ -77,7 +77,7 @@ class WindWakerOnline implements IPlugin, IWWOnlineHelpers, IPluginServerConfig 
     }
 
     getServerURL(): string {
-        return "192.99.70.23:8010";
+        return "modloader64.com:9010";
     }
 }
 
