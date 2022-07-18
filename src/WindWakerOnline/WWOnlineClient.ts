@@ -32,8 +32,8 @@ export default class WWOnlineClient {
     @ParentReference()
     parent!: IPlugin;
 
-    //@SidedProxy(ProxySide.CLIENT, PuppetOverlord)
-    //puppets!: PuppetOverlord;
+    @SidedProxy(ProxySide.CLIENT, PuppetOverlord)
+    puppets!: PuppetOverlord;
 
     LobbyConfig: IWWOnlineLobbyConfig = {} as IWWOnlineLobbyConfig;
     clientStorage: WWOnlineStorageClient = new WWOnlineStorageClient();
@@ -62,9 +62,9 @@ export default class WWOnlineClient {
     @Preinit()
     preinit() {
         this.config = this.ModLoader.config.registerConfigCategory("WWOnline") as WWOnlineConfigCategory;
-        //if (this.puppets !== undefined) {
-        //    this.puppets.clientStorage = this.clientStorage;
-        //}
+        if (this.puppets !== undefined) {
+            this.puppets.clientStorage = this.clientStorage;
+        }
     }
 
     @Init()
@@ -136,9 +136,9 @@ export default class WWOnlineClient {
                     //console.log(j);
                     //let temp = eventFlagByte
                     eventFlagByte = (eventFlagByte |= eventFlagByteStorage)
-                    console.log(`Flag: 0x${i.toString(16)}, val: 0x${eventFlagByteStorage.toString(16)} -> 0x${eventFlagByte.toString(16)}`);
+                    //console.log(`Flag: 0x${i.toString(16)}, val: 0x${eventFlagByteStorage.toString(16)} -> 0x${eventFlagByte.toString(16)}`);
                 }
-                else if (indexBlacklist.includes(i) && eventFlagByte !== eventFlagByteStorage) console.log(`indexBlacklist: 0x${i.toString(16)}`);
+                //else if (indexBlacklist.includes(i) && eventFlagByte !== eventFlagByteStorage) console.log(`indexBlacklist: 0x${i.toString(16)}`);
                 eventFlagByteStorage = eventFlagByte; //client storage bits
             }
             eventFlags.writeUInt8(eventFlagByte, i);
@@ -430,7 +430,7 @@ export default class WWOnlineClient {
         for(let i = 0; i < packet.eventFlags.byteLength; i++){
             let tempByteIncoming = packet.eventFlags.readUInt8(i);
             let tempByte = this.clientStorage.eventFlags.readUInt8(i);
-            if(tempByteIncoming !== tempByte) console.log(`Writing flag: 0x${i.toString(16)}, tempByte: 0x${tempByte.toString(16)}, tempByteIncoming: 0x${tempByteIncoming.toString(16)} `);
+            //if(tempByteIncoming !== tempByte) console.log(`Writing flag: 0x${i.toString(16)}, tempByte: 0x${tempByte.toString(16)}, tempByteIncoming: 0x${tempByteIncoming.toString(16)} `);
         }
 
         parseFlagChanges(packet.eventFlags, this.clientStorage.eventFlags);

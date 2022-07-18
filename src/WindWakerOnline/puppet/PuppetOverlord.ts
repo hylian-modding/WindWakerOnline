@@ -175,13 +175,13 @@ export class PuppetOverlord {
   }
 
   sendPuppetPacket() {
-    let distances: number[] = [];
+/*     let distances: number[] = [];
     this.clientStorage.scaledDistances.forEach((value: number) => {
       distances.push(value);
     });
-    distances = distances.sort();
+    distances = distances.sort(); */
     if (!this.amIAlone && this.core.helper.isLinkControllable()) {
-      this.fakeClientPuppet.data.matrixUpdateRate = distances[0];
+      //this.fakeClientPuppet.data.matrixUpdateRate = distances[0];
       let packet = new WWO_PuppetPacket(this.fakeClientPuppet.data, this.ModLoader.clientLobby);
       let _packet = new WWO_PuppetWrapperPacket(packet, this.ModLoader.clientLobby);
       this.ModLoader.clientSide.sendPacket(_packet);
@@ -201,11 +201,11 @@ export class PuppetOverlord {
 
       let e = new RemoteSoundPlayRequest(packet.player, actualPacket.data, 0);
       bus.emit(WWOEvents.ON_REMOTE_PLAY_SOUND, e);
-      let their_pos: Vector3 = this.Vec3FromBuffer(actualPacket.data.pos);
-      let my_pos: Vector3 = this.Vec3FromBuffer(this.fakeClientPuppet.data.pos);
-      let dist: number = Math.floor((Math.sqrt(Math.abs(((my_pos.x - their_pos.x) ^ 2) + ((my_pos.y - their_pos.y) ^ 2) + ((my_pos.z - their_pos.z) ^ 2))) / 10));
+      //let their_pos: Vector3 = this.Vec3FromBuffer(actualPacket.data.pos);
+      //let my_pos: Vector3 = this.Vec3FromBuffer(this.fakeClientPuppet.data.pos);
+      //let dist: number = Math.floor((Math.sqrt(Math.abs(((my_pos.x - their_pos.x) ^ 2) + ((my_pos.y - their_pos.y) ^ 2) + ((my_pos.z - their_pos.z) ^ 2))) / 10));
       //console.log(dist);
-      this.clientStorage.scaledDistances.set(puppet.id, dist);
+      //this.clientStorage.scaledDistances.set(puppet.id, dist);
       puppet.processIncomingPuppetData(actualPacket.data, e);
     }
   }

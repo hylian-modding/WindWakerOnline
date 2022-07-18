@@ -29,7 +29,7 @@ export class PuppetData {
     this.core = core;
     this.copyFields.push('pos');
     //this.copyFields.push('matrixData');
-    //this.copyFields.push('rot');
+    this.copyFields.push('rot');
   }
 
   get pos(): Buffer {
