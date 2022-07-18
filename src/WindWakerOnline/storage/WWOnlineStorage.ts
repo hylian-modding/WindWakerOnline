@@ -1,7 +1,7 @@
 import { IWWOSyncSave } from '../types/WWAliases';
 import { WWOnlineStorageBase } from './WWOnlineStorageBase';
-import * as API from 'WindWaker/API/imports';
-import { IInventory, IQuestStatus, IShields, ISwords } from 'WindWaker/API/imports';
+import * as API from 'WindWaker/API/Imports';
+import { IInventory, IQuestStatus, IShields, ISwords } from 'WindWaker/API/Imports';
 
 export class WWOnlineStorage extends WWOnlineStorageBase {
   networkPlayerInstances: any = {};
