@@ -29,7 +29,7 @@ export class WWOSaveData implements ISaveSyncData {
       "swords",
       "shields",
       'eventFlags',
-      'eventMngrFlags'
+      'regionFlags'
     ];
 
     obj = JSON.parse(JSON.stringify(this.core.save));
@@ -157,7 +157,7 @@ export class WWOSaveData implements ISaveSyncData {
 
       //Flags (God Help Me)
       storage.eventFlags = obj.eventFlags;
-      //storage.eventMngrFlags = obj.eventMngrFlags;
+      storage.regionFlags = obj.regionFlags;
 
     } catch (err: any) {
       console.log(err.stack);

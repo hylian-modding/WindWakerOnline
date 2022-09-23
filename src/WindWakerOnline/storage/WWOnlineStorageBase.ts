@@ -10,6 +10,8 @@ export class WWOnlineStorageBase {
   inventoryStorage: InventoryStorageBase = new InventoryStorageBase();
   questStorage: QuestStorageBase = new QuestStorageBase();
   eventFlags: Buffer = Buffer.alloc(0x100);
+  regionFlags: Buffer = Buffer.alloc(0x240);
+  liveFlags: Buffer = Buffer.alloc(0x20);
 }
 export class QuestStorageBase implements IQuestStatus {
   constructor() { }

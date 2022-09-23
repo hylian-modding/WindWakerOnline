@@ -8,7 +8,7 @@ import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { INetworkPlayer, LobbyData, NetworkHandler } from "modloader64_api/NetworkHandler";
 import { Preinit, Init, Postinit, onTick } from "modloader64_api/PluginLifecycle";
 import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
-import { WWO_UpdateSaveDataPacket, WWO_DownloadRequestPacket, WWO_ScenePacket, WWO_SceneRequestPacket, WWO_DownloadResponsePacket, WWO_BottleUpdatePacket, WWO_ErrorPacket, WWO_RoomPacket, WWO_RupeePacket, WWO_FlagUpdate } from "./network/WWOPackets";
+import { WWO_UpdateSaveDataPacket, WWO_DownloadRequestPacket, WWO_ScenePacket, WWO_SceneRequestPacket, WWO_DownloadResponsePacket, WWO_BottleUpdatePacket, WWO_ErrorPacket, WWO_RoomPacket, WWO_RupeePacket, WWO_FlagUpdate, WWO_LiveFlagUpdate, WWO_RegionFlagUpdate } from "./network/WWOPackets";
 import { IWWOnlineLobbyConfig, WWOnlineConfigCategory } from "./WWOnline";
 import { WWOSaveData } from "./save/WWOnlineSaveData";
 import { WWOnlineStorage } from "./storage/WWOnlineStorage";
@@ -149,10 +149,42 @@ export default class WWOnlineClient {
             //console.log(eventFlagStorage.toString('hex'));
             //console.log(`eventFlags`);
             //console.log(eventFlags.toString('hex'))
-            this.clientStorage.eventFlags = eventFlags;
+            parseFlagChanges(eventFlags, this.clientStorage.eventFlags);
             eventFlagStorage = eventFlags;
             this.ModLoader.clientSide.sendPacket(new WWO_FlagUpdate(this.clientStorage.eventFlags, this.ModLoader.clientLobby));
         }
+    }
+
+    //Regional Flags (dSv_memory_c)
+    updateRegionFlags() {
+        if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNameValid() || this.core.helper.isPaused() || !this.clientStorage.first_time_sync) return;
+        let regionFlagsAddr = 0x803C4F88;
+        let regionFlags = Buffer.alloc(0x240);
+        
+        regionFlags = this.core.save.regionFlags;
+        if(!regionFlags.equals(this.clientStorage.regionFlags)) {
+            this.clientStorage.regionFlags = regionFlags;
+            console.log("updateRegionFlags")
+            this.ModLoader.clientSide.sendPacket(new WWO_RegionFlagUpdate(this.clientStorage.regionFlags, this.ModLoader.clientLobby))
+        }
+    }
+
+    // dSv_memory_c dSv_memBit_c Flags?
+    updateLiveFlags() {
+        if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNameValid() || this.core.helper.isPaused() || !this.clientStorage.first_time_sync) return;
+        let liveFlagsAddr = 0x803C5380;
+        let liveFlags = Buffer.alloc(0x20);
+        let regionFlagsAddr = 0x803C4F88;
+
+        liveFlags = this.core.save.liveFlags;
+        if(!liveFlags.equals(this.clientStorage.liveFlags)) {
+            this.clientStorage.liveFlags = liveFlags;
+            console.log("updateLiveFlags");
+            this.ModLoader.clientSide.sendPacket(new WWO_LiveFlagUpdate(this.clientStorage.liveFlags, this.ModLoader.clientLobby))
+            this.ModLoader.emulator.rdramWriteBuffer(regionFlagsAddr + (this.core.global.current_stage_id * 0x20), this.clientStorage.liveFlags);
+            console.log('wrote LiveFlags to SaveFile');
+        }
+        
     }
 
     updateBottles(onlyfillCache = false) {
@@ -243,6 +275,7 @@ export default class WWOnlineClient {
                 )
             );
         }
+        this.clientStorage.liveFlags = this.core.save.liveFlags;
     }
 
     @EventHandler(WWEvents.ON_ROOM_CHANGE)
@@ -437,6 +470,36 @@ export default class WWOnlineClient {
         this.core.save.eventFlags = this.clientStorage.eventFlags;
     }
 
+    @NetworkHandler('WWO_RegionFlagUpdate')
+    onRegionFlagUpdate(packet: WWO_RegionFlagUpdate) {
+        if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNameValid()) return;
+        console.log("onRegionFlagUpdate Client");
+
+        for (let i = 0; i < packet.regionFlags.byteLength; i++) {
+            let tempByteIncoming = packet.regionFlags.readUInt8(i);
+            let tempByte = this.clientStorage.regionFlags.readUInt8(i);
+            //if (tempByteIncoming !== tempByte) console.log(`Writing flag: 0x${i.toString(16)}, tempByte: 0x${tempByte.toString(16)}, tempByteIncoming: 0x${tempByteIncoming.toString(16)} `);
+        }
+        
+        parseFlagChanges(packet.regionFlags, this.clientStorage.regionFlags);
+        this.core.save.regionFlags = this.clientStorage.regionFlags;
+    }
+
+    @NetworkHandler('WWO_LiveFlagUpdate')
+    onLiveFlagUpdate(packet: WWO_LiveFlagUpdate) {
+        if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNameValid()) return;
+        console.log("onLiveFlagUpdate Client");
+
+        for (let i = 0; i < packet.liveFlags.byteLength; i++) {
+            let tempByteIncoming = packet.liveFlags.readUInt8(i);
+            let tempByte = this.clientStorage.liveFlags.readUInt8(i);
+            //if (tempByteIncoming !== tempByte) console.log(`Writing flag: 0x${i.toString(16)}, tempByte: 0x${tempByte.toString(16)}, tempByteIncoming: 0x${tempByteIncoming.toString(16)} `);
+        }
+        
+        parseFlagChanges(packet.liveFlags, this.clientStorage.liveFlags);
+        this.core.save.liveFlags = this.clientStorage.liveFlags;
+    }
+    
     /* @NetworkHandler('WWO_RupeePacket')
     onRupees(packet: WWO_RupeePacket) {
         if (!this.sentRupees) {
@@ -478,5 +541,7 @@ export default class WWOnlineClient {
     inventoryUpdateTick() {
         this.updateInventory();
         this.updateFlags();
+        this.updateRegionFlags();
+        //this.updateLiveFlags();
     }
 }

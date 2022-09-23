@@ -4,7 +4,7 @@ import {
 } from 'modloader64_api/ModLoaderDefaultImpls';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 
-export class PacketWithTimeStamp extends Packet{
+export class PacketWithTimeStamp extends Packet {
   timestamp: number = Date.now();
 }
 
@@ -21,7 +21,7 @@ export class WWO_BottleUpdatePacket extends Packet {
 
 export class WWO_RupeePacket extends PacketWithTimeStamp {
   delta: number;
-  constructor(delta: number, lobby: string){
+  constructor(delta: number, lobby: string) {
     super('WWO_RupeePacket', 'WWOnline', lobby, false);
     this.delta = delta;
   }
@@ -86,11 +86,11 @@ export class WWO_UpdateSaveDataPacket extends Packet {
   }
 }
 
-export class WWO_ErrorPacket extends Packet{
+export class WWO_ErrorPacket extends Packet {
 
   message: string;
 
-  constructor(msg: string, lobby: string){
+  constructor(msg: string, lobby: string) {
     super('WWO_ErrorPacket', 'WWO', lobby, false);
     this.message = msg;
   }
@@ -106,6 +106,30 @@ export class WWO_FlagUpdate extends Packet {
   ) {
     super('WWO_FlagUpdate', 'WWOnline', lobby, false);
     this.eventFlags = eventFlags;
+  }
+}
+
+export class WWO_RegionFlagUpdate extends Packet {
+  regionFlags: Buffer;
+
+  constructor(
+    regionFlags: Buffer,
+    lobby: string
+  ) {
+    super('WWO_RegionFlagUpdate', 'WWOnline', lobby, false);
+    this.regionFlags = regionFlags;
+  }
+}
+
+export class WWO_LiveFlagUpdate extends Packet {
+  liveFlags: Buffer;
+
+  constructor(
+    liveFlags: Buffer,
+    lobby: string
+  ) {
+    super('WWO_LiveFlagUpdate', 'WWOnline', lobby, false);
+    this.liveFlags = liveFlags;
   }
 }
 
