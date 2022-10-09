@@ -19,7 +19,8 @@ class WWOSyncSaveServer implements IWWOSyncSaveServer {
   swords!: ISwords;
   shields!: IShields;
   eventFlags: Buffer = Buffer.alloc(0x100);
-  eventMngrFlags: Buffer = Buffer.alloc(0x500);
+  regionFlags: Buffer = Buffer.alloc(0x240);
+  liveFlags: Buffer = Buffer.alloc(0x20);
 }
 
 export class WWOnlineSave_Server {

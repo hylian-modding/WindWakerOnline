@@ -32,8 +32,8 @@ export default class WWOnlineClient {
     @ParentReference()
     parent!: IPlugin;
 
-    @SidedProxy(ProxySide.CLIENT, PuppetOverlord)
-    puppets!: PuppetOverlord;
+    //@SidedProxy(ProxySide.CLIENT, PuppetOverlord)
+    //puppets!: PuppetOverlord;
 
     LobbyConfig: IWWOnlineLobbyConfig = {} as IWWOnlineLobbyConfig;
     clientStorage: WWOnlineStorageClient = new WWOnlineStorageClient();
@@ -62,9 +62,9 @@ export default class WWOnlineClient {
     @Preinit()
     preinit() {
         this.config = this.ModLoader.config.registerConfigCategory("WWOnline") as WWOnlineConfigCategory;
-        if (this.puppets !== undefined) {
+        /* if (this.puppets !== undefined) {
             this.puppets.clientStorage = this.clientStorage;
-        }
+        } */
     }
 
     @Init()
