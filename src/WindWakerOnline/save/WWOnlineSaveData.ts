@@ -129,9 +129,7 @@ export class WWOSaveData implements ISaveSyncData {
       this.processMixedLoop_OVERWRITE(obj.questStatus, storage.questStatus, ["max_mp", "max_hp"])
 
       storage.questStatus.songs = obj.questStatus.songs;
-      storage.questStatus.bracelet = obj.questStatus.bracelet;
-      storage.questStatus.braceletEquip = obj.questStatus.braceletEquip;
-      storage.questStatus.triforce = obj.questStatus.triforce;
+      storage.questStatus.bracelet = obj.questStatus.bracelet;      storage.questStatus.triforce = obj.questStatus.triforce;
       storage.questStatus.pearls = obj.questStatus.pearls;
       storage.questStatus.pirate_charm = obj.questStatus.pirate_charm;
       storage.questStatus.owned_charts = obj.questStatus.owned_charts;
@@ -255,7 +253,7 @@ export class WWOSaveData implements ISaveSyncData {
         }
 
         //Quest Status Screen Flags
-        this.processMixedLoop(obj.questStatus, storage.questStatus, ["max_hp", "max_mp", "swordEquip", "shieldEquip"]);
+        this.processMixedLoop(obj.questStatus, storage.questStatus, ["max_hp", "max_mp"]);
 
         let triforce = storage.questStatus.triforce;
         let pearls = storage.questStatus.pearls;
@@ -279,7 +277,6 @@ export class WWOSaveData implements ISaveSyncData {
         parseFlagChanges(obj.questStatus.deciphered_triforce, deciphered_triforce);
         parseFlagChanges(obj.questStatus.tingle_statues, tingle_statues);
 
-        storage.questStatus.bracelet = obj.questStatus.bracelet
         storage.questStatus.triforce = triforce;
         storage.questStatus.pearls = pearls;
         storage.questStatus.songs = songs;
@@ -293,13 +290,6 @@ export class WWOSaveData implements ISaveSyncData {
 
         this.processMixedLoop(obj.swords, storage.swords, []);
         this.processMixedLoop(obj.shields, storage.shields, []);
-
-        if (storage.questStatus.braceletEquip === 0xFF && obj.questStatus.braceletEquip < storage.questStatus.braceletEquip) {
-          storage.questStatus.braceletEquip = obj.questStatus.braceletEquip;
-        }
-        else if (obj.questStatus.braceletEquip !== 0xFF && obj.questStatus.braceletEquip > storage.questStatus.braceletEquip) {
-          storage.questStatus.braceletEquip = obj.questStatus.braceletEquip;
-        }
 
         //bottles
         if (obj.inventory.FIELD_BOTTLE1 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE1 === InventoryItem.NONE) {
@@ -323,8 +313,10 @@ export class WWOSaveData implements ISaveSyncData {
           storage.inventory.FIELD_BOW = obj.inventory.FIELD_BOW;
         }
         //Different Picto Box versions
-        if (obj.inventory.FIELD_PICTO_BOX === InventoryItem.PICTO_BOX || obj.inventory.FIELD_PICTO_BOX === InventoryItem.DELUXE_PICTO_BOX) {
-          storage.inventory.FIELD_PICTO_BOX = obj.inventory.FIELD_PICTO_BOX;
+        if (obj.inventory.FIELD_PICTO_BOX === InventoryItem.PICTO_BOX && storage.inventory.FIELD_PICTO_BOX !== InventoryItem.DELUXE_PICTO_BOX) {
+          storage.inventory.FIELD_PICTO_BOX = InventoryItem.PICTO_BOX;
+        } else if (obj.inventory.FIELD_PICTO_BOX === InventoryItem.DELUXE_PICTO_BOX) {
+          storage.inventory.FIELD_PICTO_BOX = InventoryItem.DELUXE_PICTO_BOX;
         }
 
         accept(true);
