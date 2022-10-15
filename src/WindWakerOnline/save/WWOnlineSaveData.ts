@@ -309,9 +309,14 @@ export class WWOSaveData implements ISaveSyncData {
         }
 
         // Different Bow versions
-        if (obj.inventory.FIELD_BOW === InventoryItem.BOW || obj.inventory.FIELD_BOW === InventoryItem.FI_BOW || obj.inventory.FIELD_BOW === InventoryItem.LIGHT_BOW) {
-          storage.inventory.FIELD_BOW = obj.inventory.FIELD_BOW;
+        if (obj.inventory.FIELD_BOW === InventoryItem.BOW && (storage.inventory.FIELD_BOW !== InventoryItem.FI_BOW && storage.inventory.FIELD_BOW !== InventoryItem.LIGHT_BOW )) {
+          storage.inventory.FIELD_BOW = InventoryItem.BOW;
+        } else if (obj.inventory.FIELD_BOW === InventoryItem.FI_BOW && storage.inventory.FIELD_BOW !== InventoryItem.LIGHT_BOW) {
+          storage.inventory.FIELD_BOW = InventoryItem.FI_BOW;
+        } else if (obj.inventory.FIELD_BOW === InventoryItem.LIGHT_BOW) {
+          storage.inventory.FIELD_BOW = InventoryItem.LIGHT_BOW;
         }
+        
         //Different Picto Box versions
         if (obj.inventory.FIELD_PICTO_BOX === InventoryItem.PICTO_BOX && storage.inventory.FIELD_PICTO_BOX !== InventoryItem.DELUXE_PICTO_BOX) {
           storage.inventory.FIELD_PICTO_BOX = InventoryItem.PICTO_BOX;
