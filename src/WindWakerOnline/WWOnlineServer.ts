@@ -299,7 +299,7 @@ export default class WWOnlineServer {
                             break;
                         case 0x9: //After Aryll or Talk w/ Tetra | Entered Dragon Roost Island 
                             if (j !== 3 && j !== 1) bitsStorage[j] = bitsIncoming[j];
-                            //else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
                             break;
                         case 0xE: //exited forest of fairies with tetra?
                             if (j !== 2) bitsStorage[j] = bitsIncoming[j];

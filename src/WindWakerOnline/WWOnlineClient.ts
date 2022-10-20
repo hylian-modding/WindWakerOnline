@@ -141,7 +141,7 @@ export default class WWOnlineClient {
                 else if (indexBlacklist.includes(i) && eventFlagByte !== eventFlagByteStorage) console.log(`Blacklisted Flag: 0x${i.toString(16)}, val: 0x${eventFlagByteStorage.toString(16)} -> 0x${eventFlagByte.toString(16)}`);
                 eventFlagByteStorage = eventFlagByte; //client storage bits
             }
-            eventFlags.writeUInt8(eventFlagByteStorage, i);
+            eventFlags.writeUInt8(eventFlagByte, i);
             eventFlagsAddr = eventFlagsAddr + 1;
         }
         if (!eventFlagStorage.equals(eventFlags)) {

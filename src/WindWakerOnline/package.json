@@ -1,6 +1,6 @@
 {
   "name": "WindWakerOnline",
-  "version": "1.0.0-nightly@2f00607",
+  "version": "1.0.0-nightly@1c2e293",
   "description": "",
   "main": "WWOnline.js",
   "author": "Psi-Hate, denoflions",
@@ -16,6 +16,6 @@
   "dependencies": {
     "bson": "^4.5.4"
   },
-  "date": "Tue, 11 Oct 2022 05:40:14 GMT",
-  "commit": "2f00607"
+  "date": "Thu, 20 Oct 2022 03:55:02 GMT",
+  "commit": "1c2e293"
 }
