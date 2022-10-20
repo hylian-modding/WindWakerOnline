@@ -136,7 +136,7 @@ export default class WWOnlineClient {
                     //console.log(j);
                     //let temp = eventFlagByte
                     eventFlagByte = (eventFlagByte |= eventFlagByteStorage)
-                    //console.log(`Flag: 0x${i.toString(16)}, val: 0x${eventFlagByteStorage.toString(16)} -> 0x${eventFlagByte.toString(16)}`);
+                    console.log(`Flag: 0x${i.toString(16)}, val: 0x${eventFlagByteStorage.toString(16)} -> 0x${eventFlagByte.toString(16)}`);
                 }
                 //else if (indexBlacklist.includes(i) && eventFlagByte !== eventFlagByteStorage) console.log(`indexBlacklist: 0x${i.toString(16)}`);
                 eventFlagByteStorage = eventFlagByte; //client storage bits
