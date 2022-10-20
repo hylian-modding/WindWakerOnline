@@ -138,7 +138,7 @@ export default class WWOnlineClient {
                     eventFlagByte = (eventFlagByte |= eventFlagByteStorage)
                     console.log(`Flag: 0x${i.toString(16)}, val: 0x${eventFlagByteStorage.toString(16)} -> 0x${eventFlagByte.toString(16)}`);
                 }
-                //else if (indexBlacklist.includes(i) && eventFlagByte !== eventFlagByteStorage) console.log(`indexBlacklist: 0x${i.toString(16)}`);
+                else if (indexBlacklist.includes(i) && eventFlagByte !== eventFlagByteStorage) console.log(`Blacklisted Flag: 0x${i.toString(16)}, val: 0x${eventFlagByteStorage.toString(16)} -> 0x${eventFlagByte.toString(16)}`);
                 eventFlagByteStorage = eventFlagByte; //client storage bits
             }
             eventFlags.writeUInt8(eventFlagByte, i);
@@ -463,7 +463,7 @@ export default class WWOnlineClient {
         for(let i = 0; i < packet.eventFlags.byteLength; i++){
             let tempByteIncoming = packet.eventFlags.readUInt8(i);
             let tempByte = this.clientStorage.eventFlags.readUInt8(i);
-            //if(tempByteIncoming !== tempByte) console.log(`Writing flag: 0x${i.toString(16)}, tempByte: 0x${tempByte.toString(16)}, tempByteIncoming: 0x${tempByteIncoming.toString(16)} `);
+            if(tempByteIncoming !== tempByte) console.log(`Writing flag: 0x${i.toString(16)}, storage: 0x${tempByte.toString(16)}, incoming: 0x${tempByteIncoming.toString(16)} `);
         }
 
         parseFlagChanges(packet.eventFlags, this.clientStorage.eventFlags);
