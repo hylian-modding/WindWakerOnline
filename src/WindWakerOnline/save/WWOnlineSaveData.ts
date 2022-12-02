@@ -29,7 +29,23 @@ export class WWOSaveData implements ISaveSyncData {
       "swords",
       "shields",
       'eventFlags',
-      'regionFlags'
+      "stage_Live",
+      "stage0_Sea",
+      "stage1_SeaAlt",
+      "stage2_ForsakenFortress",
+      "stage3_DRC",
+      "stage4_FW",
+      "stage5_TOTG",
+      "stage6_ET",
+      "stage7_WT",
+      "stage8_GT",
+      "stage9_Hyrule",
+      "stageA_ShipInt",
+      "stageB_HouseMisc",
+      "stageC_CaveInt",
+      "stageD_CaveShip",
+      "stageE_BlueChu",
+      "stageF_TestMaps"
     ];
 
     obj = JSON.parse(JSON.stringify(this.core.save));
@@ -71,6 +87,11 @@ export class WWOSaveData implements ISaveSyncData {
           obj2[key] = obj1[key];
           bus.emit(WWOEvents.SAVE_DATA_ITEM_SET, new WWOSaveDataItemSet(key, obj2[key]));
         }
+      } else if (Buffer.isBuffer(obj1[key])) {
+        let tempBuf = obj2[key];
+        parseFlagChanges(obj1[key], tempBuf);
+        obj2[key] = tempBuf;
+        bus.emit(WWOEvents.SAVE_DATA_ITEM_SET, new WWOSaveDataItemSet(key, obj2[key]));
       }
     });
   }
@@ -90,6 +111,10 @@ export class WWOSaveData implements ISaveSyncData {
         obj2[key] = obj1[key];
       } else if (typeof (obj1[key]) === 'number') {
         obj2[key] = obj1[key];
+      } else if (Buffer.isBuffer(obj1[key])) {
+        let tempBuf = obj1[key];
+        parseFlagChanges(obj2[key], tempBuf);
+        obj1[key] = tempBuf;
       }
     });
   }
@@ -129,7 +154,7 @@ export class WWOSaveData implements ISaveSyncData {
       this.processMixedLoop_OVERWRITE(obj.questStatus, storage.questStatus, ["max_mp", "max_hp"])
 
       storage.questStatus.songs = obj.questStatus.songs;
-      storage.questStatus.bracelet = obj.questStatus.bracelet;      storage.questStatus.triforce = obj.questStatus.triforce;
+      storage.questStatus.bracelet = obj.questStatus.bracelet; storage.questStatus.triforce = obj.questStatus.triforce;
       storage.questStatus.pearls = obj.questStatus.pearls;
       storage.questStatus.pirate_charm = obj.questStatus.pirate_charm;
       storage.questStatus.owned_charts = obj.questStatus.owned_charts;
@@ -152,10 +177,24 @@ export class WWOSaveData implements ISaveSyncData {
       this.processMixedLoop_OVERWRITE(obj.swords, storage.swords, []);
       this.processMixedLoop_OVERWRITE(obj.shields, storage.shields, []);
 
-
       //Flags (God Help Me)
       storage.eventFlags = obj.eventFlags;
-      storage.regionFlags = obj.regionFlags;
+
+      this.processMixedLoop_OVERWRITE(obj.stage0_Sea, storage.stage0_Sea, []);
+      this.processMixedLoop_OVERWRITE(obj.stage1_SeaAlt, storage.stage1_SeaAlt, []);
+      this.processMixedLoop_OVERWRITE(obj.stage2_ForsakenFortress, storage.stage2_ForsakenFortress, []);
+      this.processMixedLoop_OVERWRITE(obj.stage3_DRC, storage.stage3_DRC, []);
+      this.processMixedLoop_OVERWRITE(obj.stage5_TOTG, storage.stage5_TOTG, []);
+      this.processMixedLoop_OVERWRITE(obj.stage7_WT, storage.stage7_WT, []);
+      this.processMixedLoop_OVERWRITE(obj.stage8_GT, storage.stage8_GT, []);
+      this.processMixedLoop_OVERWRITE(obj.stage9_Hyrule, storage.stage9_Hyrule, []);
+      this.processMixedLoop_OVERWRITE(obj.stageA_ShipInt, storage.stageA_ShipInt, []);
+      this.processMixedLoop_OVERWRITE(obj.stageB_HouseMisc, storage.stageB_HouseMisc, []);
+      this.processMixedLoop_OVERWRITE(obj.stageC_CaveInt, storage.stageC_CaveInt, []);
+      this.processMixedLoop_OVERWRITE(obj.stageD_CaveShip, storage.stageD_CaveShip, []);
+      this.processMixedLoop_OVERWRITE(obj.stageE_BlueChu, storage.stageE_BlueChu, []);
+      this.processMixedLoop_OVERWRITE(obj.stageF_TestMaps, storage.stageF_TestMaps, []);
+
 
     } catch (err: any) {
       console.log(err.stack);
@@ -201,7 +240,7 @@ export class WWOSaveData implements ISaveSyncData {
         storage.inventory.owned_spoils = owned_spoils;
         storage.inventory.owned_bait = owned_bait;
         storage.inventory.owned_items = owned_items;
-
+        
         for (let i = 0; i < spoils_slots.byteLength; i++) {
           let incomingCount = obj.inventory.spoils_slots.readUInt8(i);
           let storageCount = storage.inventory.spoils_slots.readUInt8(i);
@@ -309,14 +348,14 @@ export class WWOSaveData implements ISaveSyncData {
         }
 
         // Different Bow versions
-        if (obj.inventory.FIELD_BOW === InventoryItem.BOW && (storage.inventory.FIELD_BOW !== InventoryItem.FI_BOW && storage.inventory.FIELD_BOW !== InventoryItem.LIGHT_BOW )) {
+        if (obj.inventory.FIELD_BOW === InventoryItem.BOW && (storage.inventory.FIELD_BOW !== InventoryItem.FI_BOW && storage.inventory.FIELD_BOW !== InventoryItem.LIGHT_BOW)) {
           storage.inventory.FIELD_BOW = InventoryItem.BOW;
         } else if (obj.inventory.FIELD_BOW === InventoryItem.FI_BOW && storage.inventory.FIELD_BOW !== InventoryItem.LIGHT_BOW) {
           storage.inventory.FIELD_BOW = InventoryItem.FI_BOW;
         } else if (obj.inventory.FIELD_BOW === InventoryItem.LIGHT_BOW) {
           storage.inventory.FIELD_BOW = InventoryItem.LIGHT_BOW;
         }
-        
+
         //Different Picto Box versions
         if (obj.inventory.FIELD_PICTO_BOX === InventoryItem.PICTO_BOX && storage.inventory.FIELD_PICTO_BOX !== InventoryItem.DELUXE_PICTO_BOX) {
           storage.inventory.FIELD_PICTO_BOX = InventoryItem.PICTO_BOX;
@@ -324,6 +363,21 @@ export class WWOSaveData implements ISaveSyncData {
           storage.inventory.FIELD_PICTO_BOX = InventoryItem.DELUXE_PICTO_BOX;
         }
 
+        // Scene Flags 
+        this.processMixedLoop(obj.stage0_Sea, storage.stage0_Sea, []);
+        this.processMixedLoop(obj.stage1_SeaAlt, storage.stage1_SeaAlt, []);
+        this.processMixedLoop(obj.stage2_ForsakenFortress, storage.stage2_ForsakenFortress, []);
+        this.processMixedLoop(obj.stage3_DRC, storage.stage3_DRC, []);
+        this.processMixedLoop(obj.stage5_TOTG, storage.stage5_TOTG, []);
+        this.processMixedLoop(obj.stage7_WT, storage.stage7_WT, []);
+        this.processMixedLoop(obj.stage8_GT, storage.stage8_GT, []);
+        this.processMixedLoop(obj.stage9_Hyrule, storage.stage9_Hyrule, []);
+        this.processMixedLoop(obj.stageA_ShipInt, storage.stageA_ShipInt, []);
+        this.processMixedLoop(obj.stageB_HouseMisc, storage.stageB_HouseMisc, []);
+        this.processMixedLoop(obj.stageC_CaveInt, storage.stageC_CaveInt, []);
+        this.processMixedLoop(obj.stageD_CaveShip, storage.stageD_CaveShip, []);
+        this.processMixedLoop(obj.stageE_BlueChu, storage.stageE_BlueChu, []);
+        this.processMixedLoop(obj.stageF_TestMaps, storage.stageF_TestMaps, []);
         accept(true);
       }).catch((err: string) => {
         console.log(err);

@@ -15,5 +15,6 @@ export class WWOnlineStorageClient extends WWOnlineStorageBase {
   ];
   room_keys: any = {};
   flagHash: string = "";
+  autoSaveHash!: string;
   //scaledDistances: Map<string, number> = new Map<string, number>();
 }

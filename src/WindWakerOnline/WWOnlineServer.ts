@@ -7,7 +7,7 @@ import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { IPacketHeader, LobbyData, ServerNetworkHandler } from "modloader64_api/NetworkHandler";
 import { Preinit } from "modloader64_api/PluginLifecycle";
 import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
-import { WWO_ScenePacket, WWO_DownloadRequestPacket, WWO_DownloadResponsePacket, WWO_UpdateSaveDataPacket, WWO_ErrorPacket, WWO_RoomPacket, WWO_BottleUpdatePacket, WWO_RupeePacket, WWO_FlagUpdate, WWO_LiveFlagUpdate, WWO_RegionFlagUpdate } from "./network/WWOPackets";
+import { WWO_ScenePacket, WWO_DownloadRequestPacket, WWO_DownloadResponsePacket, WWO_UpdateSaveDataPacket, WWO_ErrorPacket, WWO_RoomPacket, WWO_BottleUpdatePacket, WWO_RupeePacket, WWO_FlagUpdate, WWO_LiveFlagUpdate, WWO_RegionFlagUpdate, WWO_ClientSceneContextUpdate } from "./network/WWOPackets";
 import { WWOSaveData } from "./save/WWOnlineSaveData";
 import { WWOnlineStorage, WWOnlineSave_Server } from "./storage/WWOnlineStorage";
 import WWSerialize from "./storage/WWSerialize";
@@ -24,8 +24,8 @@ export default class WWOnlineServer {
     ModLoader!: IModLoaderAPI;
     @ParentReference()
     parent!: IPlugin;
-    @SidedProxy(ProxySide.SERVER, PuppetOverlord)
-    puppets!: PuppetOverlord;
+    //@SidedProxy(ProxySide.SERVER, PuppetOverlord)
+    //puppets!: PuppetOverlord;
     
     sendPacketToPlayersInScene(packet: IPacketHeader) {
         try {
@@ -211,6 +211,11 @@ export default class WWOnlineServer {
         }
     }
 
+    @ServerNetworkHandler('WWO_ClientSceneContextUpdate')
+    onSceneContextSync_server(packet: WWO_ClientSceneContextUpdate) {
+        this.sendPacketToPlayersInScene(packet);
+    }
+
     /* @ServerNetworkHandler('WWO_RupeePacket')
     onRupees(packet: WWO_RupeePacket) {
         let storage: WWOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
@@ -361,11 +366,6 @@ export default class WWOnlineServer {
         storage.regionFlags = regionFlagsStorage;
 
         this.ModLoader.serverSide.sendPacket(new WWO_RegionFlagUpdate(storage.regionFlags, packet.lobby));
-    }
-
-    @ServerNetworkHandler('WWO_LiveFlagUpdate')
-    onLiveFlagUpdate(packet: WWO_LiveFlagUpdate) {
-        this.sendPacketToPlayersInScene(packet);
     }
 
     @ServerNetworkHandler('WWO_UpdateSaveDataPacket')

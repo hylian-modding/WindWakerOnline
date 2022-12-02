@@ -8,7 +8,7 @@ import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { INetworkPlayer, LobbyData, NetworkHandler } from "modloader64_api/NetworkHandler";
 import { Preinit, Init, Postinit, onTick } from "modloader64_api/PluginLifecycle";
 import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
-import { WWO_UpdateSaveDataPacket, WWO_DownloadRequestPacket, WWO_ScenePacket, WWO_SceneRequestPacket, WWO_DownloadResponsePacket, WWO_BottleUpdatePacket, WWO_ErrorPacket, WWO_RoomPacket, WWO_RupeePacket, WWO_FlagUpdate, WWO_LiveFlagUpdate, WWO_RegionFlagUpdate } from "./network/WWOPackets";
+import { WWO_UpdateSaveDataPacket, WWO_DownloadRequestPacket, WWO_ScenePacket, WWO_SceneRequestPacket, WWO_DownloadResponsePacket, WWO_BottleUpdatePacket, WWO_ErrorPacket, WWO_RoomPacket, WWO_RupeePacket, WWO_FlagUpdate, WWO_LiveFlagUpdate, WWO_RegionFlagUpdate, WWO_ClientSceneContextUpdate } from "./network/WWOPackets";
 import { IWWOnlineLobbyConfig, WWOnlineConfigCategory } from "./WWOnline";
 import { WWOSaveData } from "./save/WWOnlineSaveData";
 import { WWOnlineStorage } from "./storage/WWOnlineStorage";
@@ -62,9 +62,9 @@ export default class WWOnlineClient {
     @Preinit()
     preinit() {
         this.config = this.ModLoader.config.registerConfigCategory("WWOnline") as WWOnlineConfigCategory;
-        /* if (this.puppets !== undefined) {
-            this.puppets.clientStorage = this.clientStorage;
-        } */
+        //if (this.puppets !== undefined) {
+        //    this.puppets.clientStorage = this.clientStorage;
+        //}
     }
 
     @Init()
@@ -155,36 +155,44 @@ export default class WWOnlineClient {
         }
     }
 
-    //Regional Flags (dSv_memory_c)
-    updateRegionFlags() {
+    //Stage Flags (dSv_memory_c)
+    updateStageFlags() {
         if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNameValid() || this.core.helper.isPaused() || !this.clientStorage.first_time_sync) return;
-        let regionFlagsAddr = 0x803C4F88;
-        let regionFlags = Buffer.alloc(0x240);
-        
-        regionFlags = this.core.save.regionFlags;
-        if(!regionFlags.equals(this.clientStorage.regionFlags)) {
-            this.clientStorage.regionFlags = regionFlags;
-            console.log("updateRegionFlags")
-            this.ModLoader.clientSide.sendPacket(new WWO_RegionFlagUpdate(this.clientStorage.regionFlags, this.ModLoader.clientLobby))
-        }
+
+
     }
 
-    // dSv_memory_c dSv_memBit_c Flags?
-    updateLiveFlags() {
-        if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNameValid() || this.core.helper.isPaused() || !this.clientStorage.first_time_sync) return;
-        let liveFlagsAddr = 0x803C5380;
-        let liveFlags = Buffer.alloc(0x20);
-        let regionFlagsAddr = 0x803C4F88;
+    autosaveSceneData() {
+        if (!this.core.helper.isLoadingZone() && this.core.global.current_scene_frame > 20 && this.clientStorage.first_time_sync) {
 
-        liveFlags = this.core.save.liveFlags;
-        if(!liveFlags.equals(this.clientStorage.liveFlags)) {
-            this.clientStorage.liveFlags = liveFlags;
-            console.log("updateLiveFlags");
-            this.ModLoader.clientSide.sendPacket(new WWO_LiveFlagUpdate(this.clientStorage.liveFlags, this.ModLoader.clientLobby))
-            this.ModLoader.emulator.rdramWriteBuffer(regionFlagsAddr + (this.core.global.current_stage_id * 0x20), this.clientStorage.liveFlags);
-            console.log('wrote LiveFlags to SaveFile');
+            let live_scene_chests: Buffer = this.core.save.stage_Live.chests;
+            let live_scene_switches: Buffer = this.core.save.stage_Live.switches;
+            let live_scene_collect: Buffer = this.core.save.stage_Live.items;
+            let live_scene_rooms: Buffer = this.core.save.stage_Live.rooms;
+            let save_scene_data: Buffer = this.core.global.getSaveDataForCurrentScene();
+            let save: Buffer = Buffer.alloc(0x24);
+
+            live_scene_chests.copy(save, 0x0); // Chests
+            live_scene_switches.copy(save, 0x4); // Switches
+            live_scene_collect.copy(save, 0x14); // Collectables
+            live_scene_rooms.copy(save, 0x18); //  Visited Rooms
+            save[0x20] = this.core.save.stage_Live.keys; // Key Count
+
+            let save_hash_2: string = this.ModLoader.utils.hashBuffer(save);
+            if (save_hash_2 !== this.clientStorage.autoSaveHash) {
+                this.ModLoader.logger.info('autosaveSceneData()');
+                save_scene_data.copy(save, 0x21, 0x21);
+                for (let i = 0; i < save_scene_data.byteLength; i++) {
+                    save_scene_data[i] |= save[i];
+                }
+                this.clientStorage.autoSaveHash = save_hash_2;
+            }
+            else {
+                return;
+            }
+            this.core.global.writeSaveDataForCurrentScene(save_scene_data);
+            this.ModLoader.clientSide.sendPacket(new WWO_ClientSceneContextUpdate(live_scene_chests, live_scene_switches, live_scene_collect, live_scene_rooms, this.ModLoader.clientLobby, this.core.global.current_stage_id, this.clientStorage.world));
         }
-        
     }
 
     updateBottles(onlyfillCache = false) {
@@ -275,7 +283,6 @@ export default class WWOnlineClient {
                 )
             );
         }
-        this.clientStorage.liveFlags = this.core.save.liveFlags;
     }
 
     @EventHandler(WWEvents.ON_ROOM_CHANGE)
@@ -460,46 +467,52 @@ export default class WWOnlineClient {
     onFlagUpdate(packet: WWO_FlagUpdate) {
         console.log("onFlagUpdate Client");
 
-        for(let i = 0; i < packet.eventFlags.byteLength; i++){
+        for (let i = 0; i < packet.eventFlags.byteLength; i++) {
             let tempByteIncoming = packet.eventFlags.readUInt8(i);
             let tempByte = this.clientStorage.eventFlags.readUInt8(i);
-            if(tempByteIncoming !== tempByte) console.log(`Writing flag: 0x${i.toString(16)}, storage: 0x${tempByte.toString(16)}, incoming: 0x${tempByteIncoming.toString(16)} `);
+            if (tempByteIncoming !== tempByte) console.log(`Writing flag: 0x${i.toString(16)}, storage: 0x${tempByte.toString(16)}, incoming: 0x${tempByteIncoming.toString(16)} `);
         }
 
         parseFlagChanges(packet.eventFlags, this.clientStorage.eventFlags);
         this.core.save.eventFlags = this.clientStorage.eventFlags;
     }
 
-    @NetworkHandler('WWO_RegionFlagUpdate')
-    onRegionFlagUpdate(packet: WWO_RegionFlagUpdate) {
-        if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNameValid()) return;
-        console.log("onRegionFlagUpdate Client");
-
-        for (let i = 0; i < packet.regionFlags.byteLength; i++) {
-            let tempByteIncoming = packet.regionFlags.readUInt8(i);
-            let tempByte = this.clientStorage.regionFlags.readUInt8(i);
-            //if (tempByteIncoming !== tempByte) console.log(`Writing flag: 0x${i.toString(16)}, tempByte: 0x${tempByte.toString(16)}, tempByteIncoming: 0x${tempByteIncoming.toString(16)} `);
+    @NetworkHandler('WWO_ClientSceneContextUpdate')
+    onSceneContextSync_client(packet: WWO_ClientSceneContextUpdate) {
+        if (
+            this.core.helper.isTitleScreen() ||
+            !this.core.helper.isSceneNameValid() ||
+            this.core.helper.isLoadingZone()
+        ) {
+            return;
         }
-        
-        parseFlagChanges(packet.regionFlags, this.clientStorage.regionFlags);
-        this.core.save.regionFlags = this.clientStorage.regionFlags;
-    }
-
-    @NetworkHandler('WWO_LiveFlagUpdate')
-    onLiveFlagUpdate(packet: WWO_LiveFlagUpdate) {
-        if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNameValid()) return;
-        console.log("onLiveFlagUpdate Client");
-
-        for (let i = 0; i < packet.liveFlags.byteLength; i++) {
-            let tempByteIncoming = packet.liveFlags.readUInt8(i);
-            let tempByte = this.clientStorage.liveFlags.readUInt8(i);
-            //if (tempByteIncoming !== tempByte) console.log(`Writing flag: 0x${i.toString(16)}, tempByte: 0x${tempByte.toString(16)}, tempByteIncoming: 0x${tempByteIncoming.toString(16)} `);
+        if (this.core.global.current_stage_id !== packet.stage) {
+            return;
         }
-        
-        parseFlagChanges(packet.liveFlags, this.clientStorage.liveFlags);
-        this.core.save.liveFlags = this.clientStorage.liveFlags;
+        if (packet.world !== this.clientStorage.world) return;
+        let buf1: Buffer = this.core.save.stage_Live.chests;
+        if (Object.keys(parseFlagChanges(packet.chests, buf1) > 0)) {
+            this.core.save.stage_Live.chests = buf1;
+        }
+
+        let buf2: Buffer = this.core.save.stage_Live.switches;
+        if (Object.keys(parseFlagChanges(packet.switches, buf2) > 0)) {
+            this.core.save.stage_Live.switches = buf2;
+        }
+
+        let buf3: Buffer = this.core.save.stage_Live.items;
+        if (Object.keys(parseFlagChanges(packet.collect, buf3) > 0)) {
+            this.core.save.stage_Live.items = buf3;
+        }
+
+        let buf4: Buffer = this.core.save.stage_Live.rooms;
+        if (Object.keys(parseFlagChanges(packet.room, buf4) > 0)) {
+            this.core.save.stage_Live.rooms = buf4;
+        }
+        // Update hash.
+        this.clientStorage.saveManager.createSave();
+        this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
     }
-    
     /* @NetworkHandler('WWO_RupeePacket')
     onRupees(packet: WWO_RupeePacket) {
         if (!this.sentRupees) {
@@ -530,6 +543,7 @@ export default class WWOnlineClient {
                     return;
                 }
                 if (this.LobbyConfig.data_syncing) {
+                    this.autosaveSceneData();
                     this.updateBottles();
                     //this.updateRupees();
                     this.syncTimer++;
@@ -541,7 +555,6 @@ export default class WWOnlineClient {
     inventoryUpdateTick() {
         this.updateInventory();
         this.updateFlags();
-        this.updateRegionFlags();
-        //this.updateLiveFlags();
+        this.updateStageFlags();
     }
 }

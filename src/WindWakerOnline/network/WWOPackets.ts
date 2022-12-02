@@ -150,3 +150,30 @@ export class WWO_PuppetWrapperPacket extends UDPPacket {
     this.data = JSON.stringify(packet);
   }
 }
+
+export class WWO_ClientSceneContextUpdate extends Packet {
+  chests: Buffer;
+  switches: Buffer;
+  collect: Buffer;
+  room: Buffer;
+  stage: number;
+  world: number;
+
+  constructor(
+    chests: Buffer,
+    switches: Buffer,
+    collect: Buffer,
+    room: Buffer,
+    lobby: string,
+    stage: number,
+    world: number
+  ) {
+    super('WWO_ClientSceneContextUpdate', 'WWOnline', lobby, false);
+    this.chests = chests;
+    this.switches = switches;
+    this.collect = collect;
+    this.room = room;
+    this.stage = stage;
+    this.world = world;
+  }
+}
