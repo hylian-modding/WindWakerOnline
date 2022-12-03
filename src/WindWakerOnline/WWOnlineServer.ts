@@ -26,7 +26,7 @@ export default class WWOnlineServer {
     parent!: IPlugin;
     //@SidedProxy(ProxySide.SERVER, PuppetOverlord)
     //puppets!: PuppetOverlord;
-    
+
     sendPacketToPlayersInScene(packet: IPacketHeader) {
         try {
             let storage: WWOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
@@ -254,7 +254,7 @@ export default class WWOnlineServer {
 
         //console.log("onFlagUpdate Server")
 
-        const indexBlacklist = [0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x7, 0x8, 0x9, 0xE, 0xF, 0x24, 0x25, 0x2D, 0x2E, 0x34];
+        const indexBlacklist = [0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x7, 0x8, 0x9, 0xE, 0xF, 0x24, 0x25, 0x2D, 0x2E, 0x34, 0x9D];
 
         for (let i = 0; i < storage.eventFlags.byteLength; i++) {
             let byteStorage = storage.eventFlags.readUInt8(i);
@@ -264,7 +264,10 @@ export default class WWOnlineServer {
 
             if (!indexBlacklist.includes(i) && byteStorage !== byteIncoming) {
                 //console.log(`Server: Parsing flag: 0x${i.toString(16)}, byteIncoming: 0x${byteIncoming.toString(16)}, bitsIncoming: 0x${bitsIncoming} `);
-                parseFlagChanges(packet.eventFlags, storage.eventFlags);
+                byteStorage = byteStorage |= byteIncoming;
+                storage.eventFlags.writeUInt8(byteStorage, i); //write new byte into the event flag at index i
+                console.log(`Server: Parsing flag: 0x${i.toString(16)}, byteStorage: 0x${byteStorage.toString(16)}, byteIncoming: 0x${byteIncoming.toString(16)} `);
+
             }
             else if (indexBlacklist.includes(i) && byteStorage !== byteIncoming) {
                 //console.log(`Server: indexBlacklist: 0x${i.toString(16)}`);
@@ -304,7 +307,7 @@ export default class WWOnlineServer {
                             break;
                         case 0x9: //After Aryll or Talk w/ Tetra | Entered Dragon Roost Island 
                             if (j !== 3 && j !== 1) bitsStorage[j] = bitsIncoming[j];
-                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                            //else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
                             break;
                         case 0xE: //exited forest of fairies with tetra?
                             if (j !== 2) bitsStorage[j] = bitsIncoming[j];
@@ -333,6 +336,13 @@ export default class WWOnlineServer {
                         case 0x34: //Medli/Makar has been kidnapped by a Floormaster
                             if (j !== 1 && j !== 0) bitsStorage[j] = bitsIncoming[j];
                             //else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                            break;
+                        case 0x9D: //Grandma Healed / Letter
+                            if (j !== 1 && j !== 0) bitsStorage[j] = bitsIncoming[j];
+                            else if (bitsIncoming[1] === 1) {
+                                bitsStorage[0] = 0; //Turn off 1st bit if 2nd bit is enabled (granmdma letter jank)
+                                console.log(`Server: Blacklisted Grandma event: 0x${i.toString(16)}, bit: ${j}`);
+                            }
                             break;
                     }
                 }
