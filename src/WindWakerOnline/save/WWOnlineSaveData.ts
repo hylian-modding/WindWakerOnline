@@ -29,7 +29,6 @@ export class WWOSaveData implements ISaveSyncData {
       "swords",
       "shields",
       'eventFlags',
-      "stage_Live",
       "stage0_Sea",
       "stage1_SeaAlt",
       "stage2_ForsakenFortress",
