@@ -1,4 +1,5 @@
 build/
+conda/
 dependencies/
 dist/
 libs/
@@ -13,3 +14,5 @@ src/test.mp
 src/WindWakerOnline/puppet/src/
 src/WindWakerOnline/puppet/CommandBuffer/
 WWO.code-workspace
+ModLoader64-config-player1.json
+ModLoader64-config-player2.json

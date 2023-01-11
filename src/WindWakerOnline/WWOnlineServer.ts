@@ -274,6 +274,8 @@ export default class WWOnlineServer {
         eventFlags[0x2E] &= 0xF7; //WATCHED_MEETING_KORL_CUTSCENE
         eventFlags[0x34] &= 0xFC; //Medli/Makar has been kidnapped by a Floormaster
         eventFlags[0x9D] &= 0xFC; //Grandma Healed / Letter
+        eventFlags[0xac] &= 0xFC; //Letter to Mom
+        eventFlags[0xc9] &= 0xFC; //Goron Trade Counter
 
         storage.eventFlags = eventFlags;
         this.ModLoader.serverSide.sendPacket(new WWO_FlagUpdate(storage.eventFlags, packet.lobby));
