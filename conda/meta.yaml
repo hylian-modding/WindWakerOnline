@@ -1,0 +1,24 @@
+package:
+  name: windwakeronline-nightly
+  version: {{ environ.get('MYPKG_VERSION', '') }}
+
+source:
+  fn: WindWakerOnline.zip
+  url: ../dist/WindWakerOnline_conda.zip
+
+build:
+  number: {{ environ.get('MYPKG_BUILD', '') }}
+  binary_relocation: False
+  detect_binary_files_with_prefix: False
+  noarch: generic
+  include_recipe: False
+  
+requirements:
+  run:
+    - windwaker-nightly
+    - bson
+
+about:
+  home: http://modloader64.com
+  license: GPL-3
+  summary: The Wind Waker Online for ML64
