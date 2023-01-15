@@ -6,7 +6,7 @@ exports.__esModule = true;
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var child_process_1 = __importDefault(require("child_process"));
 var path_1 = __importDefault(require("path"));
-var name = "TwilightPrincessOnline";
+var name = "WindWakerOnline";
 function remove_nightly_tag() {
     try {
         var meta = JSON.parse(fs_extra_1["default"].readFileSync("./src/".concat(name, "/package.json")).toString());
