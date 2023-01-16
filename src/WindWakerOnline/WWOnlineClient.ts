@@ -41,7 +41,7 @@ export default class WWOnlineClient {
 
     syncContext: number = -1;
     syncTimer: number = 0;
-    synctimerMax: number = 60 * 20;
+    synctimerMax: number = 60 * 5;
     syncPending: boolean = false;
 
     lastRupees: number = 0;
