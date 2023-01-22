@@ -213,7 +213,7 @@ export default class WWOnlineServer {
 
     @ServerNetworkHandler('WWO_ClientSceneContextUpdate')
     onSceneContextSync_server(packet: WWO_ClientSceneContextUpdate) {
-        this.sendPacketToPlayersInScene(packet);
+        this.ModLoader.serverSide.sendPacket(packet);
     }
 
     /* @ServerNetworkHandler('WWO_RupeePacket')

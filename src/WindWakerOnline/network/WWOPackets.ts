@@ -3,6 +3,7 @@ import {
   Packet, UDPPacket
 } from 'modloader64_api/ModLoaderDefaultImpls';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
+import { IStageInfo } from 'WindWaker/API/WWAPI';
 
 export class PacketWithTimeStamp extends Packet {
   timestamp: number = Date.now();
@@ -152,28 +153,19 @@ export class WWO_PuppetWrapperPacket extends UDPPacket {
 }
 
 export class WWO_ClientSceneContextUpdate extends Packet {
-  chests: Buffer;
-  switches: Buffer;
-  collect: Buffer;
-  room: Buffer;
-  stage: number;
+  stage: IStageInfo;
+  id: number;
   world: number;
 
   constructor(
-    chests: Buffer,
-    switches: Buffer,
-    collect: Buffer,
-    room: Buffer,
+    stage: IStageInfo,
     lobby: string,
-    stage: number,
+    id: number,
     world: number
   ) {
     super('WWO_ClientSceneContextUpdate', 'WWOnline', lobby, false);
-    this.chests = chests;
-    this.switches = switches;
-    this.collect = collect;
-    this.room = room;
     this.stage = stage;
+    this.id = id;
     this.world = world;
   }
 }

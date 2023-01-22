@@ -363,20 +363,20 @@ export class WWOSaveData implements ISaveSyncData {
         }
 
         // Scene Flags 
-        this.processMixedLoop(obj.stage0_Sea, storage.stage0_Sea, []);
-        this.processMixedLoop(obj.stage1_SeaAlt, storage.stage1_SeaAlt, []);
-        this.processMixedLoop(obj.stage2_ForsakenFortress, storage.stage2_ForsakenFortress, []);
-        this.processMixedLoop(obj.stage3_DRC, storage.stage3_DRC, []);
-        this.processMixedLoop(obj.stage5_TOTG, storage.stage5_TOTG, []);
-        this.processMixedLoop(obj.stage7_WT, storage.stage7_WT, []);
-        this.processMixedLoop(obj.stage8_GT, storage.stage8_GT, []);
-        this.processMixedLoop(obj.stage9_Hyrule, storage.stage9_Hyrule, []);
-        this.processMixedLoop(obj.stageA_ShipInt, storage.stageA_ShipInt, []);
-        this.processMixedLoop(obj.stageB_HouseMisc, storage.stageB_HouseMisc, []);
-        this.processMixedLoop(obj.stageC_CaveInt, storage.stageC_CaveInt, []);
-        this.processMixedLoop(obj.stageD_CaveShip, storage.stageD_CaveShip, []);
-        this.processMixedLoop(obj.stageE_BlueChu, storage.stageE_BlueChu, []);
-        this.processMixedLoop(obj.stageF_TestMaps, storage.stageF_TestMaps, []);
+        this.processMixedLoop(obj.stage0_Sea, storage.stage0_Sea, ["keys"]);
+        this.processMixedLoop(obj.stage1_SeaAlt, storage.stage1_SeaAlt, ["keys"]);
+        this.processMixedLoop(obj.stage2_ForsakenFortress, storage.stage2_ForsakenFortress, ["keys"]);
+        this.processMixedLoop(obj.stage3_DRC, storage.stage3_DRC, ["keys"]);
+        this.processMixedLoop(obj.stage5_TOTG, storage.stage5_TOTG, ["keys"]);
+        this.processMixedLoop(obj.stage7_WT, storage.stage7_WT, ["keys"]);
+        this.processMixedLoop(obj.stage8_GT, storage.stage8_GT, ["keys"]);
+        this.processMixedLoop(obj.stage9_Hyrule, storage.stage9_Hyrule, ["keys"]);
+        this.processMixedLoop(obj.stageA_ShipInt, storage.stageA_ShipInt, ["keys"]);
+        this.processMixedLoop(obj.stageB_HouseMisc, storage.stageB_HouseMisc, ["keys"]);
+        this.processMixedLoop(obj.stageC_CaveInt, storage.stageC_CaveInt, ["keys"]);
+        this.processMixedLoop(obj.stageD_CaveShip, storage.stageD_CaveShip, ["keys"]);
+        this.processMixedLoop(obj.stageE_BlueChu, storage.stageE_BlueChu, ["keys"]);
+        this.processMixedLoop(obj.stageF_TestMaps, storage.stageF_TestMaps, ["keys"]);
         accept(true);
       }).catch((err: string) => {
         console.log(err);

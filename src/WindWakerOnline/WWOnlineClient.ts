@@ -21,6 +21,7 @@ import { parseFlagChanges } from "./save/parseFlagChanges";
 import * as API from "WindWaker/API/WWAPI";
 import { PuppetOverlord } from "./puppet/PuppetOverlord";
 import bitwise from 'bitwise';
+import { StageInfo } from "WindWaker/src/StageInfo";
 
 export default class WWOnlineClient {
     @InjectCore()
@@ -151,7 +152,7 @@ export default class WWOnlineClient {
             let save_hash_2: string = this.ModLoader.utils.hashBuffer(save);
             if (save_hash_2 !== this.clientStorage.autoSaveHash) {
                 this.ModLoader.logger.info('autosaveSceneData()');
-                save_scene_data.copy(save, 0x21, 0x21);
+                save_scene_data.copy(save, 0x21, 0x21, 0x23);
                 for (let i = 0; i < save_scene_data.byteLength; i++) {
                     save_scene_data[i] |= save[i];
                 }
@@ -161,7 +162,7 @@ export default class WWOnlineClient {
                 return;
             }
             this.core.global.writeSaveDataForCurrentScene(save_scene_data);
-            this.ModLoader.clientSide.sendPacket(new WWO_ClientSceneContextUpdate(live_scene_chests, live_scene_switches, live_scene_collect, live_scene_rooms, this.ModLoader.clientLobby, this.core.global.current_stage_id, this.clientStorage.world));
+            this.ModLoader.clientSide.sendPacket(new WWO_ClientSceneContextUpdate(this.core.save.stage_Live, this.ModLoader.clientLobby, this.core.global.current_stage_id, this.clientStorage.world));
         }
     }
 
@@ -465,32 +466,75 @@ export default class WWOnlineClient {
         ) {
             return;
         }
-        if (this.core.global.current_stage_id !== packet.stage) {
-            return;
-        }
         if (packet.world !== this.clientStorage.world) return;
-        let buf1: Buffer = this.core.save.stage_Live.chests;
-        if (Object.keys(parseFlagChanges(packet.chests, buf1) > 0)) {
-            this.core.save.stage_Live.chests = buf1;
-        }
 
-        let buf2: Buffer = this.core.save.stage_Live.switches;
-        if (Object.keys(parseFlagChanges(packet.switches, buf2) > 0)) {
-            this.core.save.stage_Live.switches = buf2;
-        }
+        let stage = new StageInfo(this.ModLoader.emulator, packet.id);
+        let chests = stage.chests;
+        let switches = stage.switches;
+        let items = stage.items;
+        let rooms = stage.rooms;
 
-        let buf3: Buffer = this.core.save.stage_Live.items;
-        if (Object.keys(parseFlagChanges(packet.collect, buf3) > 0)) {
-            this.core.save.stage_Live.items = buf3;
-        }
+        parseFlagChanges(packet.stage.chests, chests);
+        parseFlagChanges(packet.stage.switches, switches);
+        parseFlagChanges(packet.stage.items, items);
+        parseFlagChanges(packet.stage.rooms, rooms);
 
-        let buf4: Buffer = this.core.save.stage_Live.rooms;
-        if (Object.keys(parseFlagChanges(packet.room, buf4) > 0)) {
-            this.core.save.stage_Live.rooms = buf4;
+        stage.chests = chests;
+        stage.switches = switches;
+        stage.items = items;
+        stage.rooms = rooms;
+        stage.keys = packet.stage.keys;
+        stage.map = packet.stage.map;
+        stage.compass = packet.stage.compass;
+        stage.bigKey = packet.stage.bigKey;
+        stage.bossKilled = packet.stage.bossKilled;
+        stage.heartTaken = packet.stage.heartTaken;
+        stage.bossIntroWatched = packet.stage.bossIntroWatched;
+
+        if (this.core.global.current_stage_id === packet.id) {
+            let buf1: Buffer = this.core.save.stage_Live.chests;
+            if (Object.keys(parseFlagChanges(packet.stage.chests, buf1) > 0)) {
+                this.core.save.stage_Live.chests = buf1;
+            }
+
+            let buf2: Buffer = this.core.save.stage_Live.switches;
+            if (Object.keys(parseFlagChanges(packet.stage.switches, buf2) > 0)) {
+                this.core.save.stage_Live.switches = buf2;
+            }
+
+            let buf3: Buffer = this.core.save.stage_Live.items;
+            if (Object.keys(parseFlagChanges(packet.stage.items, buf3) > 0)) {
+                this.core.save.stage_Live.items = buf3;
+            }
+            let buf4: Buffer = this.core.save.stage_Live.rooms;
+            if (Object.keys(parseFlagChanges(packet.stage.rooms, buf4) > 0)) {
+                this.core.save.stage_Live.rooms = buf4;
+            }
+            if (packet.stage.keys !== this.core.save.stage_Live.keys) {
+                this.core.save.stage_Live.keys = packet.stage.keys;
+            }
+            if (packet.stage.map) {
+                this.core.save.stage_Live.map = packet.stage.map;
+            }
+            if (packet.stage.compass) {
+                this.core.save.stage_Live.compass = packet.stage.compass;
+            }
+            if (packet.stage.bigKey) {
+                this.core.save.stage_Live.bigKey = packet.stage.bigKey;
+            }
+            if (packet.stage.bossKilled) {
+                this.core.save.stage_Live.bossKilled = packet.stage.bossKilled;
+            }
+            if (packet.stage.heartTaken) {
+                this.core.save.stage_Live.heartTaken = packet.stage.heartTaken;
+            }
+            if (packet.stage.bossIntroWatched) {
+                this.core.save.stage_Live.bossIntroWatched = packet.stage.bossIntroWatched;
+            }
+            // Update hash.
+            this.clientStorage.saveManager.createSave();
+            this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
         }
-        // Update hash.
-        this.clientStorage.saveManager.createSave();
-        this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
     }
     /* @NetworkHandler('WWO_RupeePacket')
     onRupees(packet: WWO_RupeePacket) {
