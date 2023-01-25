@@ -28,7 +28,7 @@ export class PuppetData {
     this.ModLoader = ModLoader;
     this.core = core;
     this.copyFields.push('pos');
-    //this.copyFields.push('matrixData');
+    this.copyFields.push('matrixData');
     this.copyFields.push('rot');
   }
 
@@ -53,7 +53,7 @@ export class PuppetData {
 
   get matrixData(): Buffer {
     if (this.matrixUpdateTicks >= this.matrixUpdateRate) {
-      let data = this.ModLoader.emulator.rdramReadPtrBuffer(this.pointer + 0x788, 0, 0x1E90);
+      let data = this.core.link.matrixData;
       let b = new SmartBuffer();
       b.writeUInt8(2);
       let diff = zlib.deflateSync(data);
@@ -69,8 +69,11 @@ export class PuppetData {
   }
 
   set matrixData(data: Buffer) {
+    let mpMcaMorf = this.ModLoader.emulator.rdramRead32(this.pointer + 0x330);
+    let J3DModel = this.ModLoader.emulator.rdramRead32(mpMcaMorf + 0x50);
+    let mpNodeMtx = this.ModLoader.emulator.rdramRead32(J3DModel + 0x8C);
     if (data.readUInt8(0) === 2) {
-      this.ModLoader.emulator.rdramWritePtrBuffer(this.pointer + 0x78C, 0, zlib.inflateSync(data.slice(1)));
+      this.ModLoader.emulator.rdramWriteBuffer(mpNodeMtx, zlib.inflateSync(data.slice(1)));
     }
   }
 
