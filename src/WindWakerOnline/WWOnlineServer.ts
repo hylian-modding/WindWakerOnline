@@ -24,8 +24,8 @@ export default class WWOnlineServer {
     ModLoader!: IModLoaderAPI;
     @ParentReference()
     parent!: IPlugin;
-    @SidedProxy(ProxySide.SERVER, PuppetOverlord)
-    puppets!: PuppetOverlord;
+    //@SidedProxy(ProxySide.SERVER, PuppetOverlord)
+    //puppets!: PuppetOverlord;
 
     sendPacketToPlayersInScene(packet: IPacketHeader) {
         try {
